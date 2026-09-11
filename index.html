@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Resultados - AtletismoPro</title>
+  <meta name="description" content="Resultados en vivo de la competencia de atletismo." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f1f5f9;
+      --surface:#ffffff;
+      --surface2:#f8fafc;
+      --border:#e2e8f0;
+      --accent:#2563eb;
+      --accent2:#4f46e5;
+      --green:#059669;
+      --gold:#d97706;
+      --silver:#64748b;
+      --bronze:#b45309;
+      --text:#0f172a;
+      --muted:#64748b;
+      --radius:16px;
+      --shadow:0 1px 3px 0 rgb(0 0 0/0.07),0 1px 2px -1px rgb(0 0 0/0.07);
+      --shadow-md:0 4px 6px -1px rgb(0 0 0/0.07),0 2px 4px -2px rgb(0 0 0/0.07);
+      --shadow-lg:0 10px 15px -3px rgb(0 0 0/0.07),0 4px 6px -4px rgb(0 0 0/0.07);
+    }
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* HEADER */
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+    .header-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px}
+    .logo{display:flex;align-items:center;gap:12px;font-weight:900;font-size:1.25rem;letter-spacing:-0.5px;color:var(--text)}
+    .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 12px rgba(37,99,235,0.3)}
+    .live-badge{display:flex;align-items:center;gap:7px;background:#dcfce7;border:1px solid #86efac;color:var(--green);padding:6px 16px;border-radius:999px;font-size:0.85rem;font-weight:700}
+    .live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+
+    /* COMPETITION SELECTOR */
+    .comp-wrap{max-width:1240px;margin:0 auto;padding:24px 24px 0}
+    .comp-label{font-size:0.85rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+    .comp-selector{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:11px 18px;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;outline:none;width:100%;max-width:560px;box-shadow:var(--shadow);font-family:'Inter',sans-serif;transition:border-color .2s,box-shadow .2s}
+    .comp-selector:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15)}
+
+    /* HERO */
+    .hero{padding:48px 24px 36px;text-align:center}
+    .hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:900;letter-spacing:-2px;color:var(--text);margin-bottom:10px;line-height:1.1}
+    .hero .sub{color:var(--muted);font-size:1.1rem;margin-bottom:28px;font-weight:500}
+    .hero .meta{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+    .meta-chip{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);padding:9px 20px;border-radius:999px;font-size:0.95rem;color:var(--muted);box-shadow:var(--shadow);font-weight:500}
+    .meta-chip strong{color:var(--text);font-weight:800}
+
+    /* TABS */
+    .tabs-wrap{max-width:1240px;margin:0 auto;padding:12px 24px 0}
+    .tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:6px;width:fit-content;flex-wrap:wrap;box-shadow:var(--shadow)}
+    .tab-btn{padding:10px 26px;border:none;background:transparent;color:var(--muted);border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.95rem;font-weight:600;transition:all .2s}
+    .tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.28)}
+    .tab-btn:hover:not(.active){background:var(--surface2);color:var(--text)}
+
+    /* CONTENT */
+    .content{max-width:1240px;margin:0 auto;padding:28px 24px 80px}
+    .section{display:none}
+    .section.active{display:block;animation:fadeIn .3s ease-out}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+    /* SEARCH / FILTERS */
+    .search-bar{display:flex;gap:14px;margin-bottom:28px;flex-wrap:wrap}
+    .search-input{flex:1;min-width:240px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 20px;border-radius:12px;font-size:1rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow)}
+    .search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
+    .search-input::placeholder{color:var(--muted)}
+    select.filter-select{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 18px;border-radius:12px;font-size:0.95rem;font-weight:600;font-family:'Inter',sans-serif;outline:none;cursor:pointer;box-shadow:var(--shadow);transition:border-color .2s}
+    select.filter-select:focus{border-color:var(--accent)}
+
+    /* EVENT CARDS (Podios) */
+    .events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:22px}
+    .event-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform .2s,box-shadow .2s;box-shadow:var(--shadow)}
+    .event-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+    .event-card-header{padding:20px 24px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .event-name{font-weight:800;font-size:1.15rem;line-height:1.3;color:var(--text);letter-spacing:-.3px}
+    .event-detail{font-size:0.85rem;color:var(--muted);margin-top:5px;font-weight:500}
+    .event-badge{padding:5px 13px;border-radius:999px;font-size:0.78rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+    .badge-pista{background:#e0e7ff;color:#4338ca}
+    .badge-campo{background:#d1fae5;color:#065f46}
+    .event-results{padding:16px 24px}
+    .no-results{color:var(--muted);font-size:0.95rem;text-align:center;padding:20px 0;font-weight:500}
+    .podium-row{display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--border)}
+    .podium-row:last-child{border-bottom:none}
+    .place-icon{font-size:1.6rem;flex-shrink:0;width:34px;text-align:center}
+    .athlete-info{flex:1;min-width:0}
+    .athlete-name{font-weight:700;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+    .athlete-club{font-size:0.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;margin-top:2px}
+    .result-mark{font-weight:900;font-size:1.1rem;color:var(--accent);white-space:nowrap;background:#eff6ff;padding:5px 12px;border-radius:10px;letter-spacing:-.3px}
+
+    /* FULL RESULTS / SIEMBRAS */
+    .event-full-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;overflow:hidden;box-shadow:var(--shadow)}
+    .event-full-header{background:var(--surface2);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background .15s}
+    .event-full-header:hover{background:#f1f5f9}
+    .event-full-title{font-weight:800;font-size:1.1rem;color:var(--text)}
+    .event-full-sub{font-size:0.85rem;color:var(--muted);margin-top:4px;font-weight:500}
+    .toggle-icon{font-size:1.2rem;transition:transform .3s;color:var(--muted)}
+    .collapsed .toggle-icon{transform:rotate(-90deg)}
+    .event-table-wrap{overflow:hidden;max-height:8000px;transition:max-height .4s ease}
+    .collapsed .event-table-wrap{max-height:0}
+    .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .results-table{width:100%;border-collapse:collapse;font-size:0.95rem}
+    .results-table th{background:var(--surface);padding:14px 24px;text-align:left;color:var(--muted);font-weight:700;font-size:0.82rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border);white-space:nowrap}
+    .results-table td{padding:14px 24px;border-bottom:1px solid var(--border);white-space:nowrap}
+    .results-table tr:last-child td{border-bottom:none}
+    .results-table tbody tr:hover td{background:var(--surface2)}
+    .rank-gold{color:var(--gold);font-weight:900}
+    .rank-silver{color:var(--silver);font-weight:800}
+    .rank-bronze{color:var(--bronze);font-weight:800}
+    .rank-other{color:var(--muted);font-weight:700}
+    .mark-cell{font-weight:900;color:var(--accent)}
+    .dq-cell{color:#ef4444;font-weight:700}
+    .athlete-cell{font-weight:700;color:var(--text)}
+    .seed-cell{font-size:.85rem;color:var(--muted);font-weight:600}
+    .heat-tag{display:inline-block;background:#eff6ff;color:var(--accent);border-radius:6px;padding:2px 8px;font-size:.78rem;font-weight:700;margin-right:4px}
+    .lane-tag{display:inline-block;background:#f0fdf4;color:var(--green);border-radius:6px;padding:2px 8px;font-size:.78rem;font-weight:700}
+
+    /* MEDALLERO */
+    .medals-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+    .medals-table{width:100%;border-collapse:collapse;font-size:0.95rem}
+    .medals-table th{background:var(--surface2);padding:15px 24px;text-align:left;color:var(--muted);font-weight:700;font-size:0.82rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)}
+    .medals-table td{padding:15px 24px;border-bottom:1px solid var(--border)}
+    .medals-table tr:last-child td{border-bottom:none}
+    .medals-table tbody tr:hover td{background:var(--surface2)}
+    .medals-table .pos{font-weight:800;color:var(--muted);font-size:0.9rem}
+    .medals-table .club-name{font-weight:800;color:var(--text)}
+    .gold-count{color:var(--gold);font-weight:900;font-size:1.05rem}
+    .silver-count{color:var(--silver);font-weight:800;font-size:1.05rem}
+    .bronze-count{color:var(--bronze);font-weight:800;font-size:1.05rem}
+    .total-count{font-weight:900;color:var(--text);font-size:1.1rem}
+    .row-1st td{background:#fffbeb!important}
+
+    /* PROGRAMA */
+    .schedule-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:22px;box-shadow:var(--shadow)}
+    .jornada-header{background:var(--surface2);padding:16px 24px;font-weight:800;color:var(--green);font-size:1.05rem;border-bottom:1px solid var(--border)}
+    .schedule-table{width:100%;border-collapse:collapse;font-size:0.95rem}
+    .schedule-table th{padding:13px 24px;text-align:left;color:var(--muted);font-weight:700;font-size:0.82rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)}
+    .schedule-table td{padding:13px 24px;border-bottom:1px solid var(--border)}
+    .schedule-table tr:last-child td{border-bottom:none}
+    .schedule-table tbody tr:hover td{background:var(--surface2)}
+    .time-cell{font-weight:900;color:var(--accent);font-size:0.95rem;letter-spacing:-.3px}
+
+    /* EMPTY STATES */
+    .empty-state{text-align:center;padding:80px 20px;color:var(--muted)}
+    .empty-icon{font-size:4rem;margin-bottom:14px;opacity:.5}
+    .empty-title{font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:8px}
+    .spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    footer{text-align:center;padding:28px 20px;color:var(--muted);font-size:0.9rem;border-top:1px solid var(--border);background:var(--surface)}
+    footer strong{color:var(--text)}
+
+    @media(max-width:768px){
+      .events-grid{grid-template-columns:1fr}
+      .hero h1{font-size:2rem;letter-spacing:-1px}
+      .tabs{width:100%}
+      .tab-btn{flex:1;text-align:center;font-size:0.9rem;padding:10px 12px}
+      .search-bar{flex-direction:column;gap:12px}
+      .search-input,.filter-select{min-width:100%;width:100%}
+      .results-table th,.results-table td{padding:12px 16px}
+      .medals-table th,.medals-table td{padding:12px 16px}
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon">🏃</div>
+      AtletismoPro
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>Resultados</div>
+  </div>
+</header>
+
+<div id="comp-selector-outer" style="display:none; border-bottom:1px solid var(--border); background:var(--surface); padding:16px 0;">
+  <div class="comp-wrap">
+    <div class="comp-label">Seleccionar competencia</div>
+    <select class="comp-selector" id="comp-select" onchange="onCompetitionChange()"></select>
+  </div>
+</div>
+
+<div class="hero">
+  <h1 id="hero-title">Cargando competencia...</h1>
+  <p class="sub" id="hero-sub"></p>
+  <div class="meta" id="hero-meta"></div>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('podios',this)">🏆 Podios</button>
+    <button class="tab-btn" onclick="switchTab('siembras',this)">🌱 Siembras</button>
+    <button class="tab-btn" onclick="switchTab('resultados',this)">📋 Resultados</button>
+    <button class="tab-btn" onclick="switchTab('medallero',this)">🥇 Medallero</button>
+    <button class="tab-btn" onclick="switchTab('programa',this)">📅 Programa</button>
+  </div>
+</div>
+
+<div class="content">
+  <!-- PODIOS -->
+  <div id="sec-podios" class="section active">
+    <div class="search-bar">
+      <input class="search-input" type="text" id="search-podios" placeholder="Buscar prueba..." oninput="filterCards()" />
+      <select class="filter-select" id="filter-gender" onchange="filterCards()">
+        <option value="">Todos los géneros</option>
+        <option value="M">Masculino</option>
+        <option value="F">Femenino</option>
+        <option value="X">Mixto</option>
+      </select>
+      <select class="filter-select" id="filter-type" onchange="filterCards()">
+        <option value="">Pista y Campo</option>
+        <option value="Pista">Pista</option>
+        <option value="Campo">Campo</option>
+      </select>
+    </div>
+    <div class="events-grid" id="podios-grid">
+      <div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div><p>Cargando resultados...</p></div>
+    </div>
+  </div>
+
+  <!-- SIEMBRAS -->
+  <div id="sec-siembras" class="section">
+    <p style="color:var(--muted);font-size:0.9rem;margin-bottom:20px;">Consulta en qué heat y carril participa tu familiar. Las siembras son permanentes aunque ya haya resultados.</p>
+    <div class="search-bar">
+      <input class="search-input" type="text" id="search-siembras" placeholder="Buscar atleta o prueba..." oninput="filterSiembras()" />
+    </div>
+    <div id="siembras-wrap"></div>
+  </div>
+
+  <!-- RESULTADOS COMPLETOS -->
+  <div id="sec-resultados" class="section">
+    <div class="search-bar">
+      <input class="search-input" type="text" id="search-results" placeholder="Buscar atleta o prueba..." oninput="filterFullResults()" />
+    </div>
+    <div id="full-results-wrap"></div>
+  </div>
+
+  <!-- MEDALLERO -->
+  <div id="sec-medallero" class="section">
+    <div class="medals-table-wrap table-scroll">
+      <table class="medals-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Club / Delegación</th>
+            <th>🥇 Oro</th>
+            <th>🥈 Plata</th>
+            <th>🥉 Bronce</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="medals-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PROGRAMA -->
+  <div id="sec-programa" class="section">
+    <div id="schedule-wrap"></div>
+  </div>
+</div>
+
+<footer>Página generada por <strong>AtletismoPro</strong> · Resultados oficiales</footer>
+
+<script>
+let DATA = null;
+let currentFile = 'results.json';
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+async function init() {
+  try {
+    const r = await fetch('index.json?v=' + Date.now());
+    if (r.ok) {
+      const idx = await r.json();
+      const comps = idx.competitions || [];
+      if (comps.length > 0) {
+        document.getElementById('comp-selector-outer').style.display = 'block';
+        const sel = document.getElementById('comp-select');
+        sel.innerHTML = comps.map(c =>
+          '<option value="' + c.filename + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
+        ).join('');
+        currentFile = comps[0].filename;
+      }
+    }
+  } catch (e) { console.log('No index.json'); }
+  loadData();
+}
+
+function onCompetitionChange() {
+  currentFile = document.getElementById('comp-select').value;
+  loadData();
+}
+
+async function loadData() {
+  document.getElementById('hero-title').textContent = 'Cargando...';
+  document.getElementById('hero-sub').textContent = '';
+  document.getElementById('hero-meta').innerHTML = '';
+  document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div></div>';
+  document.getElementById('full-results-wrap').innerHTML = '';
+  document.getElementById('siembras-wrap').innerHTML = '';
+  try {
+    const r = await fetch(currentFile + '?v=' + Date.now());
+    if (!r.ok) throw new Error('not found');
+    DATA = await r.json();
+  } catch (e) {
+    document.getElementById('hero-title').textContent = 'Error al cargar';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">Archivo no encontrado</div><p>No se pudo cargar ' + currentFile + '</p></div>';
+    return;
+  }
+  render();
+}
+
+function render() {
+  const ci = DATA.competition_info || {};
+  const name = ci.competition_name || 'Competencia de Atletismo';
+  document.getElementById('hero-title').textContent = name;
+  document.title = name + ' — AtletismoPro';
+
+  const dates = [ci.start_date, ci.end_date].filter(Boolean).join(' — ');
+  document.getElementById('hero-sub').textContent = dates;
+
+  const evCount = (DATA.events || []).length;
+  const athSet = new Set();
+  (DATA.events || []).forEach(ev => (ev.seedings || []).forEach(s => athSet.add(s.athlete_name)));
+  document.getElementById('hero-meta').innerHTML =
+    '<div class="meta-chip">🏅 <strong>' + evCount + '</strong>&nbsp;pruebas</div>' +
+    '<div class="meta-chip">👤 <strong>' + athSet.size + '</strong>&nbsp;atletas</div>' +
+    '<div class="meta-chip">🏛️ <strong>' + (DATA.medal_table || []).length + '</strong>&nbsp;clubes</div>';
+
+  renderPodios();
+  renderSiembras();
+  renderFullResults();
+  renderMedals();
+  renderSchedule();
+}
+
+function placeIcon(i) {
+  return ['🥇', '🥈', '🥉'][i] || '<span style="font-size:.95rem;color:var(--muted);font-weight:800">' + (i + 1) + '°</span>';
+}
+
+/* PODIOS */
+function renderPodios() {
+  const grid = document.getElementById('podios-grid');
+  const events = DATA.events || [];
+  if (!events.length) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin resultados aún</div></div>';
+    return;
+  }
+  grid.innerHTML = events.map(ev => {
+    const podium = (ev.podium || []).slice(0, 3);
+    const badge = ev.type === 'Campo' ? 'badge-campo' : 'badge-pista';
+    const rows = podium.length
+      ? podium.map((r, i) =>
+          '<div class="podium-row">' +
+          '<div class="place-icon">' + placeIcon(i) + '</div>' +
+          '<div class="athlete-info"><div class="athlete-name">' + (r.athlete_name || '-') + '</div><div class="athlete-club">' + (r.athlete_club || '') + '</div></div>' +
+          '<div class="result-mark">' + (r.result || '-') + '</div>' +
+          '</div>'
+        )
+      : ['<div class="no-results">Sin resultados registrados</div>'];
+    return '<div class="event-card" data-name="' + ev.name + '" data-gender="' + (ev.gender ? ev.gender[0] : '') + '" data-type="' + ev.type + '">' +
+      '<div class="event-card-header"><div><div class="event-name">' + ev.name + '</div><div class="event-detail">' + ev.category + ' · ' + ev.gender + ' · ' + ev.round + '</div></div>' +
+      '<span class="event-badge ' + badge + '">' + ev.type + '</span></div>' +
+      '<div class="event-results">' + rows.join('') + '</div></div>';
+  }).join('');
+}
+
+function filterCards() {
+  const q = document.getElementById('search-podios').value.toLowerCase();
+  const g = document.getElementById('filter-gender').value;
+  const t = document.getElementById('filter-type').value;
+  document.querySelectorAll('.event-card').forEach(c => {
+    const show = c.dataset.name.toLowerCase().includes(q)
+      && (g === '' || c.dataset.gender === g)
+      && (t === '' || c.dataset.type === t);
+    c.style.display = show ? '' : 'none';
+  });
+}
+
+/* SIEMBRAS */
+function renderSiembras() {
+  const wrap = document.getElementById('siembras-wrap');
+  const events = (DATA.events || []).filter(ev => {
+    const seeds = ev.seedings || [];
+    return seeds.some(s => s.heat_number || s.lane_number || s.order_number);
+  });
+  if (!events.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">🌱</div><div class="empty-title">Sin siembras asignadas</div><p>Las siembras aparecerán cuando el organizador las configure.</p></div>';
+    return;
+  }
+  wrap.innerHTML = events.map((ev, idx) => {
+    const seeds = (ev.seedings || []).slice().sort((a,b) => {
+      if (ev.type === 'Pista') {
+        const hA = parseInt(a.heat_number)||999, hB = parseInt(b.heat_number)||999;
+        const lA = parseInt(a.lane_number)||999, lB = parseInt(b.lane_number)||999;
+        return hA !== hB ? hA - hB : lA - lB;
+      } else {
+        return (parseInt(a.order_number)||999) - (parseInt(b.order_number)||999);
+      }
+    });
+    const isPista = ev.type === 'Pista';
+    const header = isPista
+      ? '<th>Serie</th><th>Carril</th><th>Dorsal</th><th>Atleta</th><th>Club</th><th>Marca P.</th>'
+      : '<th>Orden</th><th>Dorsal</th><th>Atleta</th><th>Club</th><th>Marca P.</th>';
+    const rows = seeds.map(s => {
+      if (isPista) {
+        return '<tr>' +
+          '<td><span class="heat-tag">S' + (s.heat_number||'—') + '</span></td>' +
+          '<td><span class="lane-tag">C' + (s.lane_number||'—') + '</span></td>' +
+          '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
+          '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
+          '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
+          '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
+          '</tr>';
+      } else {
+        return '<tr>' +
+          '<td><span class="lane-tag">#' + (s.order_number||'—') + '</span></td>' +
+          '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
+          '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
+          '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
+          '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
+          '</tr>';
+      }
+    }).join('');
+    const status = ev.has_results ? '✅' : '⏳';
+    return '<div class="event-full-section" id="eseed-' + idx + '">' +
+      '<div class="event-full-header" onclick="toggleSeed(' + idx + ')">' +
+        '<div><div class="event-full-title">' + status + ' ' + ev.name + ' — ' + ev.category + ' (' + (ev.gender?ev.gender[0]:'') + ')</div>' +
+        '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + '</div></div>' +
+        '<span class="toggle-icon">▾</span>' +
+      '</div>' +
+      '<div class="event-table-wrap"><div class="table-scroll">' +
+        '<table class="results-table"><thead><tr>' + header + '</tr></thead><tbody>' + rows + '</tbody></table>' +
+      '</div></div></div>';
+  }).join('');
+}
+
+function toggleSeed(idx) {
+  document.getElementById('eseed-' + idx).classList.toggle('collapsed');
+}
+
+function filterSiembras() {
+  const q = document.getElementById('search-siembras').value.toLowerCase();
+  document.querySelectorAll('#siembras-wrap .event-full-section').forEach(sec => {
+    sec.style.display = sec.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+/* RESULTADOS COMPLETOS */
+function renderFullResults() {
+  const wrap = document.getElementById('full-results-wrap');
+  const events = DATA.events || [];
+  if (!events.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Sin resultados</div></div>';
+    return;
+  }
+  wrap.innerHTML = events.map((ev, idx) => {
+    const rows = (ev.results || []).map((r, i) => {
+      const rankClass = ['rank-gold', 'rank-silver', 'rank-bronze'][r.rank - 1] || 'rank-other';
+      const markClass = r.is_disqualified ? 'dq-cell' : 'mark-cell';
+      const mark = r.is_disqualified ? (r.status || 'DQ') : (r.result || '-');
+      let seedHtml = '';
+      if (r.heat_number) seedHtml += '<span class="heat-tag">S' + r.heat_number + '</span>';
+      if (r.lane_number) seedHtml += '<span class="lane-tag">C' + r.lane_number + '</span>';
+      else if (r.order_number) seedHtml += '<span class="lane-tag">#' + r.order_number + '</span>';
+      return '<tr>' +
+        '<td class="' + rankClass + '">' + (r.rank || (i + 1)) + '</td>' +
+        '<td style="color:var(--muted);font-weight:600">' + (r.bib || '') + '</td>' +
+        '<td class="athlete-cell">' + (r.athlete_name || '-') + '</td>' +
+        '<td style="color:var(--muted)">' + (r.athlete_club || '-') + '</td>' +
+        '<td style="color:var(--muted)">' + (r.athlete_category || '') + '</td>' +
+        '<td class="seed-cell">' + (seedHtml || '—') + '</td>' +
+        '<td class="' + markClass + '">' + mark + '</td>' +
+        '</tr>';
+    }).join('');
+    return '<div class="event-full-section" id="efull-' + idx + '">' +
+      '<div class="event-full-header" onclick="toggleEvent(' + idx + ')">' +
+        '<div><div class="event-full-title">' + ev.name + ' — ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</div>' +
+        '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + (ev.jornada ? ' · ' + ev.jornada : '') + '</div></div>' +
+        '<span class="toggle-icon">▾</span>' +
+      '</div>' +
+      '<div class="event-table-wrap"><div class="table-scroll">' +
+        (rows
+          ? '<table class="results-table"><thead><tr><th>#</th><th>Dorsal</th><th>Nombre</th><th>Club</th><th>Cat.</th><th>Siembra</th><th>Marca</th></tr></thead><tbody>' + rows + '</tbody></table>'
+          : '<div class="no-results" style="padding:20px 24px">Sin resultados registrados</div>') +
+      '</div></div></div>';
+  }).join('');
+}
+
+function toggleEvent(idx) {
+  document.getElementById('efull-' + idx).classList.toggle('collapsed');
+}
+
+function filterFullResults() {
+  const q = document.getElementById('search-results').value.toLowerCase();
+  document.querySelectorAll('#full-results-wrap .event-full-section').forEach(sec => {
+    sec.style.display = sec.textContent.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+/* MEDALLERO */
+function renderMedals() {
+  const body = document.getElementById('medals-body');
+  const table = DATA.medal_table || [];
+  if (!table.length) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Sin datos de medallero aún</td></tr>';
+    return;
+  }
+  body.innerHTML = table.map((row, i) =>
+    '<tr class="' + (i === 0 ? 'row-1st' : '') + '">' +
+    '<td class="pos">' + row.position + '</td>' +
+    '<td class="club-name">' + row.club + '</td>' +
+    '<td class="gold-count">' + row.oro + '</td>' +
+    '<td class="silver-count">' + row.plata + '</td>' +
+    '<td class="bronze-count">' + row.bronce + '</td>' +
+    '<td class="total-count">' + row.total + '</td>' +
+    '</tr>'
+  ).join('');
+}
+
+/* PROGRAMA */
+function renderSchedule() {
+  const wrap = document.getElementById('schedule-wrap');
+  const jornadas = DATA.schedule || [];
+  if (!jornadas.length) {
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Sin programa cargado</div></div>';
+    return;
+  }
+  wrap.innerHTML = jornadas.map(j =>
+    '<div class="schedule-section">' +
+    '<div class="jornada-header">📅 ' + j.name + '</div>' +
+    '<div class="table-scroll"><table class="schedule-table">' +
+    '<thead><tr><th>Hora</th><th>Prueba</th><th>Categoría</th><th>Ronda</th><th>Tipo</th></tr></thead><tbody>' +
+    (j.events || []).map(ev =>
+      '<tr>' +
+      '<td class="time-cell">' + (ev.time || '—') + '</td>' +
+      '<td style="font-weight:700;color:var(--text)">' + ev.name + '</td>' +
+      '<td>' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</td>' +
+      '<td style="color:var(--muted);font-weight:600">' + (ev.round || 'Final') + '</td>' +
+      '<td><span class="event-badge ' + (ev.type === 'Campo' ? 'badge-campo' : 'badge-pista') + '">' + ev.type + '</span></td>' +
+      '</tr>'
+    ).join('') +
+    '</tbody></table></div></div>'
+  ).join('');
+}
+init();
+</script>
+</body>
+</html>
