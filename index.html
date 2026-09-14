@@ -270,8 +270,7 @@
 
 <script>
 let DATA = null;
-let currentFile = 'datos.json';
-const SUPABASE_BUCKET_URL = 'https://kfcmhlsuoufvlyizqljm.supabase.co/storage/v1/object/public/atletismo-web';
+let currentFile = '';
 
 function switchTab(name, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -282,20 +281,27 @@ function switchTab(name, btn) {
 
 async function init() {
   try {
-    const r = await fetch(`${SUPABASE_BUCKET_URL}/indice_competencias.json?v=${Date.now()}`);
+    const r = await fetch('index.json?v=' + Date.now());
     if (r.ok) {
       const idx = await r.json();
-      const comps = idx.competitions || [];
+      const comps = (idx.competitions || []).filter(c => (c.file || c.filename));
       if (comps.length > 0) {
-        document.getElementById('comp-selector-outer').style.display = 'block';
         const sel = document.getElementById('comp-select');
         sel.innerHTML = comps.map(c =>
           '<option value="' + (c.file || c.filename) + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
         ).join('');
-        currentFile = comps[0].file || comps[0].filename || 'datos.json';
+        currentFile = comps[0].file || comps[0].filename;
+        if (comps.length > 1) {
+          document.getElementById('comp-selector-outer').style.display = 'block';
+        }
       }
     }
-  } catch (e) { console.log('No index.json'); }
+  } catch (e) { console.log('No index.json:', e); }
+  if (!currentFile) {
+    document.getElementById('hero-title').textContent = 'No hay competencias publicadas';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquí.</p></div>';
+    return;
+  }
   loadData();
 }
 
@@ -311,7 +317,7 @@ async function loadData() {
   document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div></div>';
   document.getElementById('full-results-wrap').innerHTML = '';
   try {
-    const r = await fetch(`${SUPABASE_BUCKET_URL}/${currentFile}?v=${Date.now()}`);
+    const r = await fetch(currentFile + '?v=' + Date.now());
     if (!r.ok) throw new Error('not found');
     DATA = await r.json();
   } catch (e) {
