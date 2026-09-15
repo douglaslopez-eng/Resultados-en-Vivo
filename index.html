@@ -27,89 +27,91 @@
       --shadow-md:0 4px 6px -1px rgb(0 0 0/0.07),0 2px 4px -2px rgb(0 0 0/0.07);
       --shadow-lg:0 10px 15px -3px rgb(0 0 0/0.07),0 4px 6px -4px rgb(0 0 0/0.07);
     }
-    html{scroll-behavior:smooth}
-    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
     /* ── HEADER ── */
-    header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
-    .header-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px}
-    .logo{display:flex;align-items:center;gap:12px;font-weight:900;font-size:1.25rem;letter-spacing:-0.5px;color:var(--text)}
-    .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 12px rgba(37,99,235,0.3)}
-    .live-badge{display:flex;align-items:center;gap:7px;background:#dcfce7;border:1px solid #86efac;color:var(--green);padding:6px 16px;border-radius:999px;font-size:0.85rem;font-weight:700}
-    .live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
+    .header-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
+    .logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:1.1rem;letter-spacing:-0.5px;color:var(--text)}
+    .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 12px rgba(37,99,235,0.3);flex-shrink:0}
+    .live-badge{display:flex;align-items:center;gap:6px;background:#dcfce7;border:1px solid #86efac;color:var(--green);padding:5px 12px;border-radius:999px;font-size:0.8rem;font-weight:700;white-space:nowrap}
+    .live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite;flex-shrink:0}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
 
     /* ── COMPETITION SELECTOR ── */
-    .comp-wrap{max-width:1240px;margin:0 auto;padding:24px 24px 0}
-    .comp-label{font-size:0.85rem;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
-    .comp-selector{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:11px 18px;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;outline:none;width:100%;max-width:560px;box-shadow:var(--shadow);font-family:'Inter',sans-serif;transition:border-color .2s,box-shadow .2s}
+    .comp-wrap{max-width:1240px;margin:0 auto;padding:16px 16px 0}
+    .comp-label{font-size:0.8rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+    .comp-selector{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:11px 16px;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;outline:none;width:100%;box-shadow:var(--shadow);font-family:'Inter',sans-serif;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:20px;padding-right:40px}
     .comp-selector:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15)}
 
     /* ── HERO ── */
-    .hero{padding:48px 24px 36px;text-align:center}
-    .hero h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:900;letter-spacing:-2px;color:var(--text);margin-bottom:10px;line-height:1.1}
-    .hero .sub{color:var(--muted);font-size:1.1rem;margin-bottom:28px;font-weight:500}
-    .hero .meta{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
-    .meta-chip{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);padding:9px 20px;border-radius:999px;font-size:0.95rem;color:var(--muted);box-shadow:var(--shadow);font-weight:500}
+    .hero{padding:28px 16px 24px;text-align:center}
+    .hero h1{font-size:clamp(1.6rem,6vw,3.5rem);font-weight:900;letter-spacing:-1.5px;color:var(--text);margin-bottom:8px;line-height:1.1}
+    .hero .sub{color:var(--muted);font-size:1rem;margin-bottom:18px;font-weight:500}
+    .hero .meta{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+    .meta-chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);padding:8px 14px;border-radius:999px;font-size:0.85rem;color:var(--muted);box-shadow:var(--shadow);font-weight:500}
     .meta-chip strong{color:var(--text);font-weight:800}
 
     /* ── TABS ── */
-    .tabs-wrap{max-width:1240px;margin:0 auto;padding:12px 24px 0}
-    .tabs{display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:6px;width:fit-content;flex-wrap:wrap;box-shadow:var(--shadow)}
-    .tab-btn{padding:10px 26px;border:none;background:transparent;color:var(--muted);border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.95rem;font-weight:600;transition:all .2s}
+    .tabs-wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+    .tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;box-shadow:var(--shadow)}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab-btn{padding:9px 16px;border:none;background:transparent;color:var(--muted);border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.88rem;font-weight:600;transition:all .2s;white-space:nowrap;min-height:44px;flex-shrink:0}
     .tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.28)}
     .tab-btn:hover:not(.active){background:var(--surface2);color:var(--text)}
 
     /* ── CONTENT ── */
-    .content{max-width:1240px;margin:0 auto;padding:28px 24px 80px}
+    .content{max-width:1240px;margin:0 auto;padding:20px 16px 80px}
     .section{display:none}
     .section.active{display:block;animation:fadeIn .3s ease-out}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
     /* ── SEARCH / FILTERS ── */
-    .search-bar{display:flex;gap:14px;margin-bottom:28px;flex-wrap:wrap}
-    .search-input{flex:1;min-width:240px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 20px;border-radius:12px;font-size:1rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow)}
+    .search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+    .search-input{flex:1;min-width:200px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 16px;border-radius:12px;font-size:1rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow)}
     .search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
     .search-input::placeholder{color:var(--muted)}
-    select.filter-select{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 18px;border-radius:12px;font-size:0.95rem;font-weight:600;font-family:'Inter',sans-serif;outline:none;cursor:pointer;box-shadow:var(--shadow);transition:border-color .2s}
+    select.filter-select{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;font-size:0.9rem;font-weight:600;font-family:'Inter',sans-serif;outline:none;cursor:pointer;box-shadow:var(--shadow);transition:border-color .2s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:18px;padding-right:34px}
     select.filter-select:focus{border-color:var(--accent)}
 
     /* ── EVENT CARDS (Podios) ── */
-    .events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:22px}
+    .events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:16px}
     .event-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform .2s,box-shadow .2s;box-shadow:var(--shadow)}
-    .event-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
-    .event-card-header{padding:20px 24px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-    .event-name{font-weight:800;font-size:1.15rem;line-height:1.3;color:var(--text);letter-spacing:-.3px}
-    .event-detail{font-size:0.85rem;color:var(--muted);margin-top:5px;font-weight:500}
-    .event-badge{padding:5px 13px;border-radius:999px;font-size:0.78rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+    @media(hover:hover){.event-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}}
+    .event-card-header{padding:16px 18px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+    .event-name{font-weight:800;font-size:1.05rem;line-height:1.3;color:var(--text);letter-spacing:-.3px}
+    .event-detail{font-size:0.82rem;color:var(--muted);margin-top:4px;font-weight:500}
+    .event-badge{padding:4px 11px;border-radius:999px;font-size:0.75rem;font-weight:700;white-space:nowrap;flex-shrink:0}
     .badge-pista{background:#e0e7ff;color:#4338ca}
     .badge-campo{background:#d1fae5;color:#065f46}
-    .event-results{padding:16px 24px}
-    .no-results{color:var(--muted);font-size:0.95rem;text-align:center;padding:20px 0;font-weight:500}
-    .podium-row{display:flex;align-items:center;gap:16px;padding:13px 0;border-bottom:1px solid var(--border)}
+    .event-results{padding:12px 18px}
+    .no-results{color:var(--muted);font-size:0.9rem;text-align:center;padding:16px 0;font-weight:500}
+    .podium-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--border)}
     .podium-row:last-child{border-bottom:none}
-    .place-icon{font-size:1.6rem;flex-shrink:0;width:34px;text-align:center}
+    .place-icon{font-size:1.5rem;flex-shrink:0;width:30px;text-align:center}
     .athlete-info{flex:1;min-width:0}
-    .athlete-name{font-weight:700;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
-    .athlete-club{font-size:0.85rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;margin-top:2px}
-    .result-mark{font-weight:900;font-size:1.1rem;color:var(--accent);white-space:nowrap;background:#eff6ff;padding:5px 12px;border-radius:10px;letter-spacing:-.3px}
+    .athlete-name{font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+    .athlete-club{font-size:0.82rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;margin-top:2px}
+    .result-mark{font-weight:900;font-size:1rem;color:var(--accent);white-space:nowrap;background:#eff6ff;padding:4px 10px;border-radius:8px;letter-spacing:-.3px}
 
     /* ── FULL RESULTS ── */
-    .event-full-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;overflow:hidden;box-shadow:var(--shadow)}
-    .event-full-header{background:var(--surface2);padding:18px 24px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background .15s}
+    .event-full-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;box-shadow:var(--shadow)}
+    .event-full-header{background:var(--surface2);padding:16px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background .15s;min-height:48px}
     .event-full-header:hover{background:#f1f5f9}
-    .event-full-title{font-weight:800;font-size:1.1rem;color:var(--text)}
-    .event-full-sub{font-size:0.85rem;color:var(--muted);margin-top:4px;font-weight:500}
-    .toggle-icon{font-size:1.2rem;transition:transform .3s;color:var(--muted)}
+    .event-full-title{font-weight:800;font-size:1rem;color:var(--text)}
+    .event-full-sub{font-size:0.82rem;color:var(--muted);margin-top:3px;font-weight:500}
+    .toggle-icon{font-size:1.2rem;transition:transform .3s;color:var(--muted);flex-shrink:0}
     .collapsed .toggle-icon{transform:rotate(-90deg)}
     .event-table-wrap{overflow:hidden;max-height:8000px;transition:max-height .4s ease}
     .collapsed .event-table-wrap{max-height:0}
     .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-    .results-table{width:100%;border-collapse:collapse;font-size:0.95rem}
-    .results-table th{background:var(--surface);padding:14px 24px;text-align:left;color:var(--muted);font-weight:700;font-size:0.82rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border);white-space:nowrap}
-    .results-table td{padding:14px 24px;border-bottom:1px solid var(--border);white-space:nowrap}
+    .results-table{width:100%;border-collapse:collapse;font-size:0.9rem;min-width:400px}
+    .results-table th{background:var(--surface);padding:12px 16px;text-align:left;color:var(--muted);font-weight:700;font-size:0.78rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border);white-space:nowrap}
+    .results-table td{padding:12px 16px;border-bottom:1px solid var(--border);white-space:nowrap}
     .results-table tr:last-child td{border-bottom:none}
     .results-table tbody tr:hover td{background:var(--surface2)}
+    .heat-header-row td{background:#e2e8f0;color:var(--text);font-weight:800;font-size:0.95rem;padding:8px 16px;border-bottom:1px solid #cbd5e1;text-transform:uppercase;letter-spacing:0.5px}
     .rank-gold{color:var(--gold);font-weight:900}
     .rank-silver{color:var(--silver);font-weight:800}
     .rank-bronze{color:var(--bronze);font-weight:800}
@@ -117,56 +119,94 @@
     .mark-cell{font-weight:900;color:var(--accent)}
     .dq-cell{color:#ef4444;font-weight:700}
     .athlete-cell{font-weight:700;color:var(--text)}
-    .seed-cell{font-size:.85rem;color:var(--muted);font-weight:600}
-    .heat-tag{display:inline-block;background:#eff6ff;color:var(--accent);border-radius:6px;padding:2px 8px;font-size:.78rem;font-weight:700;margin-right:4px}
-    .lane-tag{display:inline-block;background:#f0fdf4;color:var(--green);border-radius:6px;padding:2px 8px;font-size:.78rem;font-weight:700}
+    .seed-cell{font-size:.82rem;color:var(--muted);font-weight:600}
+    .heat-tag{display:inline-block;background:#eff6ff;color:var(--accent);border-radius:6px;padding:2px 7px;font-size:.75rem;font-weight:700;margin-right:4px}
+    .lane-tag{display:inline-block;background:#f0fdf4;color:var(--green);border-radius:6px;padding:2px 7px;font-size:.75rem;font-weight:700}
 
     /* ── MEDALLERO ── */
     .medals-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
-    .medals-table{width:100%;border-collapse:collapse;font-size:0.95rem}
-    .medals-table th{background:var(--surface2);padding:15px 24px;text-align:left;color:var(--muted);font-weight:700;font-size:0.82rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)}
-    .medals-table td{padding:15px 24px;border-bottom:1px solid var(--border)}
+    .medals-table{width:100%;border-collapse:collapse;font-size:0.9rem;min-width:340px}
+    .medals-table th{background:var(--surface2);padding:12px 16px;text-align:left;color:var(--muted);font-weight:700;font-size:0.78rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)}
+    .medals-table td{padding:12px 16px;border-bottom:1px solid var(--border)}
     .medals-table tr:last-child td{border-bottom:none}
     .medals-table tbody tr:hover td{background:var(--surface2)}
-    .medals-table .pos{font-weight:800;color:var(--muted);font-size:0.9rem}
+    .medals-table .pos{font-weight:800;color:var(--muted);font-size:0.88rem}
     .medals-table .club-name{font-weight:800;color:var(--text)}
-    .gold-count{color:var(--gold);font-weight:900;font-size:1.05rem}
-    .silver-count{color:var(--silver);font-weight:800;font-size:1.05rem}
-    .bronze-count{color:var(--bronze);font-weight:800;font-size:1.05rem}
-    .total-count{font-weight:900;color:var(--text);font-size:1.1rem}
+    .gold-count{color:var(--gold);font-weight:900;font-size:1rem}
+    .silver-count{color:var(--silver);font-weight:800;font-size:1rem}
+    .bronze-count{color:var(--bronze);font-weight:800;font-size:1rem}
+    .total-count{font-weight:900;color:var(--text);font-size:1.05rem}
     .row-1st td{background:#fffbeb!important}
 
     /* ── PROGRAMA ── */
-    .schedule-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:22px;box-shadow:var(--shadow)}
-    .jornada-header{background:var(--surface2);padding:16px 24px;font-weight:800;color:var(--green);font-size:1.05rem;border-bottom:1px solid var(--border)}
-    .schedule-table{width:100%;border-collapse:collapse;font-size:0.95rem}
-    .schedule-table th{padding:13px 24px;text-align:left;color:var(--muted);font-weight:700;font-size:0.82rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)}
-    .schedule-table td{padding:13px 24px;border-bottom:1px solid var(--border)}
+    .schedule-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
+    .jornada-header{background:var(--surface2);padding:14px 18px;font-weight:800;color:var(--green);font-size:1rem;border-bottom:1px solid var(--border)}
+    .schedule-table{width:100%;border-collapse:collapse;font-size:0.9rem;min-width:300px}
+    .schedule-table th{padding:11px 16px;text-align:left;color:var(--muted);font-weight:700;font-size:0.78rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)}
+    .schedule-table td{padding:11px 16px;border-bottom:1px solid var(--border)}
     .schedule-table tr:last-child td{border-bottom:none}
     .schedule-table tbody tr:hover td{background:var(--surface2)}
-    .time-cell{font-weight:900;color:var(--accent);font-size:0.95rem;letter-spacing:-.3px}
+    .time-cell{font-weight:900;color:var(--accent);font-size:0.92rem;letter-spacing:-.3px}
 
     /* ── ESTADOS VACÍOS ── */
-    .empty-state{text-align:center;padding:80px 20px;color:var(--muted)}
-    .empty-icon{font-size:4rem;margin-bottom:14px;opacity:.5}
-    .empty-title{font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:8px}
-    .spinner{width:48px;height:48px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 20px}
+    .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
+    .empty-icon{font-size:3.5rem;margin-bottom:12px;opacity:.5}
+    .empty-title{font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:8px}
+    .spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 18px}
     @keyframes spin{to{transform:rotate(360deg)}}
 
-    footer{text-align:center;padding:28px 20px;color:var(--muted);font-size:0.9rem;border-top:1px solid var(--border);background:var(--surface)}
+    footer{text-align:center;padding:24px 16px;color:var(--muted);font-size:0.88rem;border-top:1px solid var(--border);background:var(--surface)}
     footer strong{color:var(--text)}
 
-    @media(max-width:768px){
-      .events-grid{grid-template-columns:1fr}
-      .hero h1{font-size:2rem;letter-spacing:-1px}
-      .tabs{width:100%}
-      .tab-btn{flex:1;text-align:center;font-size:0.9rem;padding:10px 12px}
-      .search-bar{flex-direction:column;gap:12px}
-      .search-input,.filter-select{min-width:100%;width:100%}
-      .results-table th,.results-table td{padding:12px 16px}
-      .medals-table th,.medals-table td{padding:12px 16px}
+    /* ── MOBILE (≤ 640px) ── */
+    @media(max-width:640px){
+      .header-inner{height:56px}
+      .logo{font-size:1rem;gap:8px}
+      .logo-icon{width:34px;height:34px;font-size:1.1rem}
+      .live-badge{font-size:0.75rem;padding:4px 10px}
+
+      .hero{padding:20px 16px 18px}
+      .hero h1{font-size:1.5rem;letter-spacing:-0.8px}
+      .hero .sub{font-size:0.9rem;margin-bottom:14px}
+      .meta-chip{font-size:0.78rem;padding:6px 12px}
+
+      .tabs-wrap{padding:0 10px}
+      .tabs{padding:4px;gap:2px;border-radius:12px}
+      .tab-btn{padding:8px 12px;font-size:0.8rem;min-height:40px}
+
+      .content{padding:16px 12px 72px}
+      .search-bar{flex-direction:column;gap:8px}
+      .search-input,.filter-select{width:100%;min-width:0}
+
+      .events-grid{grid-template-columns:1fr;gap:12px}
+      .event-card-header{padding:14px 16px}
+      .event-name{font-size:0.98rem}
+      .event-results{padding:10px 16px}
+      .podium-row{gap:10px;padding:10px 0}
+      .place-icon{font-size:1.3rem;width:26px}
+      .athlete-name{font-size:0.95rem}
+      .result-mark{font-size:0.9rem;padding:3px 8px}
+
+      .results-table th,.results-table td{padding:10px 12px;font-size:0.82rem}
+      .medals-table th,.medals-table td{padding:10px 12px;font-size:0.82rem}
+      .schedule-table th,.schedule-table td{padding:9px 12px;font-size:0.82rem}
+      .event-full-header{padding:14px 16px}
+      .event-full-title{font-size:0.95rem}
+      .jornada-header{padding:12px 16px;font-size:0.95rem}
+
+      footer{padding:20px 12px;font-size:0.82rem}
+    }
+
+    /* ── TABLET (641px – 1024px) ── */
+    @media(min-width:641px) and (max-width:1024px){
+      .events-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+      .hero h1{font-size:2.4rem}
+      .content{padding:24px 20px 80px}
+      .tabs-wrap{padding:0 20px}
+      .comp-wrap{padding:20px 20px 0}
     }
   </style>
+
 </head>
 <body>
 
@@ -404,27 +444,51 @@ function renderFullResults() {
     return;
   }
   wrap.innerHTML = events.map((ev, idx) => {
-    const rows = (ev.results || []).map((r, i) => {
-      const rankClass = ['rank-gold', 'rank-silver', 'rank-bronze'][r.rank - 1] || 'rank-other';
-      const markClass = r.is_disqualified ? 'dq-cell' : 'mark-cell';
-      const mark = r.is_disqualified ? (r.status || 'DQ') : (r.result || '-');
+    
+    // Group results by heat
+    const heats = {};
+    const hasHeats = (ev.results || []).some(r => r.heat_number);
+    
+    (ev.results || []).forEach((r, i) => {
+      const h = r.heat_number || 'General';
+      if (!heats[h]) heats[h] = [];
+      heats[h].push({ ...r, _origIndex: i });
+    });
 
-      // Siembra: Serie y Carril
-      let seedHtml = '';
-      if (r.heat_number) seedHtml += '<span class="heat-tag">S' + r.heat_number + '</span>';
-      if (r.lane_number)  seedHtml += '<span class="lane-tag">C' + r.lane_number + '</span>';
-      else if (r.order_number) seedHtml += '<span class="lane-tag">#' + r.order_number + '</span>';
+    const heatKeys = Object.keys(heats).sort((a, b) => {
+      if (a === 'General') return -1;
+      if (b === 'General') return 1;
+      return parseInt(a) - parseInt(b);
+    });
 
-      return '<tr>' +
-        '<td class="' + rankClass + '">' + (r.rank || (i + 1)) + '</td>' +
-        '<td style="color:var(--muted);font-weight:600">' + (r.bib || '') + '</td>' +
-        '<td class="athlete-cell">' + (r.athlete_name || '-') + '</td>' +
-        '<td style="color:var(--muted)">' + (r.athlete_club || '-') + '</td>' +
-        '<td style="color:var(--muted)">' + (r.athlete_category || '') + '</td>' +
-        '<td class="seed-cell">' + (seedHtml || '—') + '</td>' +
-        '<td class="' + markClass + '">' + mark + '</td>' +
-        '</tr>';
-    }).join('');
+    let rowsHtml = '';
+    heatKeys.forEach(hKey => {
+      if (hasHeats && hKey !== 'General') {
+        rowsHtml += '<tr class="heat-header-row"><td colspan="7">Heat: ' + hKey + '</td></tr>';
+      } else if (hasHeats && hKey === 'General') {
+        rowsHtml += '<tr class="heat-header-row"><td colspan="7">Sin Serie</td></tr>';
+      }
+
+      rowsHtml += heats[hKey].map(r => {
+        const rankClass = ['rank-gold', 'rank-silver', 'rank-bronze'][r.rank - 1] || 'rank-other';
+        const markClass = r.is_disqualified ? 'dq-cell' : 'mark-cell';
+        const mark = r.is_disqualified ? (r.status || 'DQ') : (r.result || '-');
+
+        let seedHtml = '';
+        if (r.lane_number)  seedHtml += '<span class="lane-tag">C' + r.lane_number + '</span>';
+        else if (r.order_number) seedHtml += '<span class="lane-tag">#' + r.order_number + '</span>';
+
+        return '<tr>' +
+          '<td class="' + rankClass + '">' + (r.rank || (r._origIndex + 1)) + '</td>' +
+          '<td style="color:var(--muted);font-weight:600">' + (r.bib || '') + '</td>' +
+          '<td class="athlete-cell">' + (r.athlete_name || '-') + '</td>' +
+          '<td style="color:var(--muted)">' + (r.athlete_club || '-') + '</td>' +
+          '<td style="color:var(--muted)">' + (r.athlete_category || '') + '</td>' +
+          '<td class="seed-cell">' + (seedHtml || '—') + '</td>' +
+          '<td class="' + markClass + '">' + mark + '</td>' +
+          '</tr>';
+      }).join('');
+    });
 
     return '<div class="event-full-section" id="efull-' + idx + '">' +
       '<div class="event-full-header" onclick="toggleEvent(' + idx + ')">' +
@@ -433,8 +497,8 @@ function renderFullResults() {
         '<span class="toggle-icon">▾</span>' +
       '</div>' +
       '<div class="event-table-wrap"><div class="table-scroll">' +
-        (rows
-          ? '<table class="results-table"><thead><tr><th>#</th><th>Dorsal</th><th>Nombre</th><th>Club</th><th>Cat.</th><th>Siembra</th><th>Marca</th></tr></thead><tbody>' + rows + '</tbody></table>'
+        (rowsHtml
+          ? '<table class="results-table"><thead><tr><th>#</th><th>Dorsal</th><th>Nombre</th><th>Club</th><th>Cat.</th><th>Asignación</th><th>Marca</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>'
           : '<div class="no-results" style="padding:20px 24px">Sin resultados registrados</div>') +
       '</div></div></div>';
   }).join('');
@@ -483,39 +547,66 @@ function renderSiembras() {
     return;
   }
   wrap.innerHTML = events.map((ev, idx) => {
-    const seeds = (ev.seedings || []).slice().sort((a,b) => {
-      if (ev.type === 'Pista') {
-        const hA = parseInt(a.heat_number)||999, hB = parseInt(b.heat_number)||999;
-        const lA = parseInt(a.lane_number)||999, lB = parseInt(b.lane_number)||999;
-        return hA !== hB ? hA - hB : lA - lB;
-      } else {
-        return (parseInt(a.order_number)||999) - (parseInt(b.order_number)||999);
-      }
+    
+    // Group seeds by heat
+    const heats = {};
+    const hasHeats = (ev.seedings || []).some(s => s.heat_number);
+    
+    (ev.seedings || []).forEach(s => {
+      const h = s.heat_number || 'General';
+      if (!heats[h]) heats[h] = [];
+      heats[h].push(s);
     });
+
+    const heatKeys = Object.keys(heats).sort((a, b) => {
+      if (a === 'General') return -1;
+      if (b === 'General') return 1;
+      return parseInt(a) - parseInt(b);
+    });
+
     const isPista = ev.type === 'Pista';
     const header = isPista
-      ? '<th>Serie</th><th>Carril</th><th>Dorsal</th><th>Atleta</th><th>Club</th><th>Marca P.</th>'
+      ? '<th>Carril</th><th>Dorsal</th><th>Atleta</th><th>Club</th><th>Marca P.</th>'
       : '<th>Orden</th><th>Dorsal</th><th>Atleta</th><th>Club</th><th>Marca P.</th>';
-    const rows = seeds.map(s => {
-      if (isPista) {
-        return '<tr>' +
-          '<td><span class="heat-tag">S' + (s.heat_number||'—') + '</span></td>' +
-          '<td><span class="lane-tag">C' + (s.lane_number||'—') + '</span></td>' +
-          '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
-          '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
-          '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
-          '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
-          '</tr>';
-      } else {
-        return '<tr>' +
-          '<td><span class="lane-tag">#' + (s.order_number||'—') + '</span></td>' +
-          '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
-          '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
-          '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
-          '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
-          '</tr>';
+
+    let rowsHtml = '';
+    heatKeys.forEach(hKey => {
+      // Sort within the heat
+      heats[hKey].sort((a,b) => {
+        if (isPista) {
+          return (parseInt(a.lane_number)||999) - (parseInt(b.lane_number)||999);
+        } else {
+          return (parseInt(a.order_number)||999) - (parseInt(b.order_number)||999);
+        }
+      });
+
+      if (hasHeats && hKey !== 'General') {
+        rowsHtml += '<tr class="heat-header-row"><td colspan="5">Serie: ' + hKey + '</td></tr>';
+      } else if (hasHeats && hKey === 'General') {
+        rowsHtml += '<tr class="heat-header-row"><td colspan="5">Sin Serie</td></tr>';
       }
-    }).join('');
+
+      rowsHtml += heats[hKey].map(s => {
+        if (isPista) {
+          return '<tr>' +
+            '<td><span class="lane-tag">C' + (s.lane_number||'—') + '</span></td>' +
+            '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
+            '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
+            '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
+            '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
+            '</tr>';
+        } else {
+          return '<tr>' +
+            '<td><span class="lane-tag">#' + (s.order_number||'—') + '</span></td>' +
+            '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
+            '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
+            '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
+            '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
+            '</tr>';
+        }
+      }).join('');
+    });
+
     const status = ev.has_results ? '✅' : '⏳';
     return '<div class="event-full-section" id="eseed-' + idx + '">' +
       '<div class="event-full-header" onclick="toggleSeed(' + idx + ')">' +
@@ -524,7 +615,7 @@ function renderSiembras() {
         '<span class="toggle-icon">▾</span>' +
       '</div>' +
       '<div class="event-table-wrap"><div class="table-scroll">' +
-        '<table class="results-table"><thead><tr>' + header + '</tr></thead><tbody>' + rows + '</tbody></table>' +
+        '<table class="results-table"><thead><tr>' + header + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
       '</div></div></div>';
   }).join('');
 }
