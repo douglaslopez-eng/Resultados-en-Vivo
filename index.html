@@ -447,10 +447,11 @@ function renderFullResults() {
     
     // Group results by heat
     const heats = {};
-    const hasHeats = (ev.results || []).some(r => r.heat_number);
+    const isCampo = ev.type === 'Campo';
+    const hasHeats = !isCampo && (ev.results || []).some(r => r.heat_number);
     
     (ev.results || []).forEach((r, i) => {
-      const h = r.heat_number || 'General';
+      const h = hasHeats ? (r.heat_number || 'General') : 'General';
       if (!heats[h]) heats[h] = [];
       heats[h].push({ ...r, _origIndex: i });
     });
@@ -490,6 +491,25 @@ function renderFullResults() {
       }).join('');
     });
 
+    let detailsHtml = '';
+    if (isCampo && ev.results && ev.results.length > 0) {
+      detailsHtml = '<div style="margin-top: 15px; background: #0ea5e9; color: white; padding: 6px; text-align: center; font-weight: bold; border-radius: 4px 4px 0 0; font-size: 0.95rem;">DETALLE DE LA PRUEBA<br><span style="font-size: 0.8rem; font-weight: normal;">' + ev.name + ' - ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ') - ' + ev.round + '</span></div>';
+      detailsHtml += '<table class="results-table" style="background: var(--surface); border: 1px solid var(--border); border-top: none;"><thead><tr><th>Pos</th><th>Nombre</th><th>Intento 1</th><th>Intento 2</th><th>Intento 3</th><th>Intento 4</th><th>Intento 5</th><th>Intento 6</th></tr></thead><tbody>';
+      detailsHtml += ev.results.map((r, i) => {
+        let attemptsHtml = '';
+        for (let j = 0; j < 6; j++) {
+           const att = (r.attempts && r.attempts[j]) ? r.attempts[j] : '';
+           attemptsHtml += '<td style="text-align:center;">' + att + '</td>';
+        }
+        return '<tr>' +
+          '<td>' + (r.rank || (i + 1)) + '</td>' +
+          '<td class="athlete-cell" style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (r.athlete_name || '-') + '</td>' +
+          attemptsHtml +
+          '</tr>';
+      }).join('');
+      detailsHtml += '</tbody></table>';
+    }
+
     return '<div class="event-full-section" id="efull-' + idx + '">' +
       '<div class="event-full-header" onclick="toggleEvent(' + idx + ')">' +
         '<div><div class="event-full-title">' + ev.name + ' — ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</div>' +
@@ -500,6 +520,7 @@ function renderFullResults() {
         (rowsHtml
           ? '<table class="results-table"><thead><tr><th>#</th><th>Dorsal</th><th>Nombre</th><th>Club</th><th>Cat.</th><th>Asignación</th><th>Marca</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>'
           : '<div class="no-results" style="padding:20px 24px">Sin resultados registrados</div>') +
+        (detailsHtml ? '<div style="overflow-x: auto; margin-top: 10px;">' + detailsHtml + '</div>' : '') +
       '</div></div></div>';
   }).join('');
 }
