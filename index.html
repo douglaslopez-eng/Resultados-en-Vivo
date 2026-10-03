@@ -494,11 +494,29 @@ function renderFullResults() {
     let detailsHtml = '';
     if (isCampo && ev.results && ev.results.length > 0) {
       detailsHtml = '<div style="margin-top: 15px; background: #0ea5e9; color: white; padding: 6px; text-align: center; font-weight: bold; border-radius: 4px 4px 0 0; font-size: 0.95rem;">DETALLE DE LA PRUEBA<br><span style="font-size: 0.8rem; font-weight: normal;">' + ev.name + ' - ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ') - ' + ev.round + '</span></div>';
-      detailsHtml += '<table class="results-table" style="background: var(--surface); border: 1px solid var(--border); border-top: none;"><thead><tr><th>Pos</th><th>Nombre</th><th>Intento 1</th><th>Intento 2</th><th>Intento 3</th><th>Intento 4</th><th>Intento 5</th><th>Intento 6</th></tr></thead><tbody>';
+      
+      let isVertical = ev.heights && ev.heights.length > 0;
+      let headersHtml = '';
+      let numCols = 6;
+      if (isVertical) {
+        numCols = ev.heights.length;
+        ev.heights.forEach(h => {
+          headersHtml += '<th>' + h + '</th>';
+        });
+      } else {
+        for (let i = 1; i <= 6; i++) {
+          headersHtml += '<th style="min-width:65px;">Intento ' + i + '</th>';
+        }
+      }
+      
+      detailsHtml += '<table class="results-table" style="background: var(--surface); border: 1px solid var(--border); border-top: none;"><thead><tr><th>Pos</th><th>Nombre</th>' + headersHtml + '</tr></thead><tbody>';
       detailsHtml += ev.results.map((r, i) => {
         let attemptsHtml = '';
-        for (let j = 0; j < 6; j++) {
-           const att = (r.attempts && r.attempts[j]) ? r.attempts[j] : '';
+        for (let j = 0; j < numCols; j++) {
+           let att = (r.attempts && r.attempts[j]) ? r.attempts[j] : '';
+           if (isVertical && att.includes('-')) {
+             att = att.split('-')[1].trim();
+           }
            attemptsHtml += '<td style="text-align:center;">' + att + '</td>';
         }
         return '<tr>' +
