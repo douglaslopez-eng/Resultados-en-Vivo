@@ -35,9 +35,12 @@
     .header-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
     .logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:1.1rem;letter-spacing:-0.5px;color:var(--text)}
     .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 12px rgba(37,99,235,0.3);flex-shrink:0}
-    .live-badge{display:flex;align-items:center;gap:6px;background:#dcfce7;border:1px solid #86efac;color:var(--green);padding:5px 12px;border-radius:999px;font-size:0.8rem;font-weight:700;white-space:nowrap}
+    .live-badge{display:flex;align-items:center;gap:6px;background:#dcfce7;border:1px solid #86efac;color:var(--green);padding:5px 12px;border-radius:999px;font-size:0.8rem;font-weight:700;white-space:nowrap;cursor:pointer;transition:background .2s}
+    .live-badge:hover{background:#bbf7d0}
     .live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite;flex-shrink:0}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
+    .refresh-toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:10px 18px;border-radius:12px;font-size:0.85rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:opacity .3s,transform .3s;pointer-events:none}
+    .refresh-toast.show{opacity:1;transform:translateY(0)}
 
     /* ── COMPETITION SELECTOR ── */
     .comp-wrap{max-width:1240px;margin:0 auto;padding:16px 16px 0}
@@ -216,7 +219,11 @@
       <div class="logo-icon">🏃</div>
       AtletismoPro
     </div>
-    <div class="live-badge"><div class="live-dot"></div>Resultados</div>
+    <div class="live-badge" onclick="manualRefresh()" title="Clic para actualizar ahora">
+      <div class="live-dot"></div>
+      <span>EN VIVO</span>
+      <span id="refresh-countdown" style="opacity:0.7;font-weight:600;font-size:0.75rem"></span>
+    </div>
   </div>
 </header>
 
@@ -307,10 +314,68 @@
 </div>
 
 <footer>Página generada por <strong>AtletismoPro</strong> · Resultados oficiales</footer>
+<div class="refresh-toast" id="refresh-toast"></div>
 
 <script>
 let DATA = null;
 let currentFile = '';
+
+// ── AUTO-REFRESH ──
+const REFRESH_INTERVAL = 60; // segundos
+let _refreshTimer = null;
+let _countdown = REFRESH_INTERVAL;
+
+function _startCountdown() {
+  clearInterval(_refreshTimer);
+  _countdown = REFRESH_INTERVAL;
+  _updateCountdownUI();
+  _refreshTimer = setInterval(() => {
+    _countdown--;
+    _updateCountdownUI();
+    if (_countdown <= 0) {
+      _silentRefresh();
+    }
+  }, 1000);
+}
+
+function _updateCountdownUI() {
+  const el = document.getElementById('refresh-countdown');
+  if (el) el.textContent = '· ' + _countdown + 's';
+}
+
+async function _silentRefresh() {
+  if (!currentFile) return;
+  try {
+    const r = await fetch(currentFile + '?v=' + Date.now());
+    if (!r.ok) return;
+    const newData = await r.json();
+    // Solo re-renderizar si hay cambios reales
+    const newStr = JSON.stringify(newData.events || []);
+    const oldStr = JSON.stringify((DATA || {}).events || []);
+    if (newStr !== oldStr) {
+      DATA = newData;
+      render();
+      _showToast('✅ Resultados actualizados');
+    }
+  } catch (e) {
+    console.log('Auto-refresh error:', e);
+  } finally {
+    _startCountdown();
+  }
+}
+
+function manualRefresh() {
+  _showToast('🔄 Actualizando...');
+  _silentRefresh();
+}
+
+function _showToast(msg) {
+  const t = document.getElementById('refresh-toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
 
 function switchTab(name, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -694,6 +759,32 @@ function renderSchedule() {
     ).join('') +
     '</tbody></table></div></div>'
   ).join('');
+}
+async function init() {
+  try {
+    const r = await fetch('index.json?v=' + Date.now());
+    if (r.ok) {
+      const idx = await r.json();
+      const comps = (idx.competitions || []).filter(c => (c.file || c.filename));
+      if (comps.length > 0) {
+        const sel = document.getElementById('comp-select');
+        sel.innerHTML = comps.map(c =>
+          '<option value="' + (c.file || c.filename) + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
+        ).join('');
+        currentFile = comps[0].file || comps[0].filename;
+        if (comps.length > 1) {
+          document.getElementById('comp-selector-outer').style.display = 'block';
+        }
+      }
+    }
+  } catch (e) { console.log('No index.json:', e); }
+  if (!currentFile) {
+    document.getElementById('hero-title').textContent = 'No hay competencias publicadas';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquí.</p></div>';
+    return;
+  }
+  await loadData();
+  _startCountdown();
 }
 init();
 </script>
