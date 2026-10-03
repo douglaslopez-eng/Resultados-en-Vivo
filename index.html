@@ -317,6 +317,8 @@
 <div class="refresh-toast" id="refresh-toast"></div>
 
 <script>
+const SUPABASE_BASE_URL = "https://kfcmhlsuoufvlyizqljm.supabase.co/storage/v1/object/public/atletismo-web";
+
 let DATA = null;
 let currentFile = '';
 
@@ -346,7 +348,11 @@ function _updateCountdownUI() {
 async function _silentRefresh() {
   if (!currentFile) return;
   try {
-    const r = await fetch(currentFile + '?v=' + Date.now());
+    let url = currentFile + '?v=' + Date.now();
+    if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
+        url = SUPABASE_BASE_URL + '/' + currentFile + '?v=' + Date.now();
+    }
+    const r = await fetch(url);
     if (!r.ok) return;
     const newData = await r.json();
     // Solo re-renderizar si hay cambios reales
@@ -386,10 +392,17 @@ function switchTab(name, btn) {
 
 async function init() {
   try {
-    const r = await fetch('index.json?v=' + Date.now());
+    let url = 'index.json?v=' + Date.now();
+    if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
+        url = SUPABASE_BASE_URL + '/indice_competencias.json?v=' + Date.now();
+    }
+    const r = await fetch(url);
     if (r.ok) {
-      const idx = await r.json();
-      const comps = (idx.competitions || []).filter(c => (c.file || c.filename));
+      let idx = await r.json();
+      // Supabase devuelve un array directo, GitHub devuelve {competitions: [...]}
+      let comps = Array.isArray(idx) ? idx : (idx.competitions || []);
+      comps = comps.filter(c => (c.file || c.filename));
+      
       if (comps.length > 0) {
         const sel = document.getElementById('comp-select');
         sel.innerHTML = comps.map(c =>
@@ -407,7 +420,8 @@ async function init() {
     document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquí.</p></div>';
     return;
   }
-  loadData();
+  await loadData();
+  _startCountdown();
 }
 
 function onCompetitionChange() {
@@ -422,7 +436,11 @@ async function loadData() {
   document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div></div>';
   document.getElementById('full-results-wrap').innerHTML = '';
   try {
-    const r = await fetch(currentFile + '?v=' + Date.now());
+    let url = currentFile + '?v=' + Date.now();
+    if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
+        url = SUPABASE_BASE_URL + '/' + currentFile + '?v=' + Date.now();
+    }
+    const r = await fetch(url);
     if (!r.ok) throw new Error('not found');
     DATA = await r.json();
   } catch (e) {
@@ -760,32 +778,7 @@ function renderSchedule() {
     '</tbody></table></div></div>'
   ).join('');
 }
-async function init() {
-  try {
-    const r = await fetch('index.json?v=' + Date.now());
-    if (r.ok) {
-      const idx = await r.json();
-      const comps = (idx.competitions || []).filter(c => (c.file || c.filename));
-      if (comps.length > 0) {
-        const sel = document.getElementById('comp-select');
-        sel.innerHTML = comps.map(c =>
-          '<option value="' + (c.file || c.filename) + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
-        ).join('');
-        currentFile = comps[0].file || comps[0].filename;
-        if (comps.length > 1) {
-          document.getElementById('comp-selector-outer').style.display = 'block';
-        }
-      }
-    }
-  } catch (e) { console.log('No index.json:', e); }
-  if (!currentFile) {
-    document.getElementById('hero-title').textContent = 'No hay competencias publicadas';
-    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquí.</p></div>';
-    return;
-  }
-  await loadData();
-  _startCountdown();
-}
+
 init();
 </script>
 </body>
