@@ -354,7 +354,7 @@ async function _silentRefresh() {
     }
     const r = await fetch(url);
     if (!r.ok) return;
-    const newData = await r.json();
+    const newData = escapeHTMLObj(await r.json());
     // Solo re-renderizar si hay cambios reales
     const newStr = JSON.stringify(newData.events || []);
     const oldStr = JSON.stringify((DATA || {}).events || []);
@@ -391,30 +391,32 @@ function switchTab(name, btn) {
 }
 
 async function init() {
-  try {
-    let url = 'index.json?v=' + Date.now();
-    if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
-        url = SUPABASE_BASE_URL + '/indice_competencias.json?v=' + Date.now();
-    }
-    const r = await fetch(url);
-    if (r.ok) {
-      let idx = await r.json();
-      // Supabase devuelve un array directo, GitHub devuelve {competitions: [...]}
-      let comps = Array.isArray(idx) ? idx : (idx.competitions || []);
-      comps = comps.filter(c => (c.file || c.filename));
-      
-      if (comps.length > 0) {
-        const sel = document.getElementById('comp-select');
-        sel.innerHTML = comps.map(c =>
-          '<option value="' + (c.file || c.filename) + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
-        ).join('');
-        currentFile = comps[0].file || comps[0].filename;
-        if (comps.length > 1) {
-          document.getElementById('comp-selector-outer').style.display = 'block';
+  // Siempre intentar primero index.json local (GitHub Pages), luego Supabase como fallback
+  const urls_to_try = ['index.json?v=' + Date.now()];
+  if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
+    urls_to_try.push(SUPABASE_BASE_URL + '/indice_competencias.json?v=' + Date.now());
+  }
+  for (const url of urls_to_try) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) {
+        let idx = await r.json();
+        let comps = Array.isArray(idx) ? idx : (idx.competitions || []);
+        comps = comps.filter(c => (c.file || c.filename));
+        if (comps.length > 0) {
+          const sel = document.getElementById('comp-select');
+          sel.innerHTML = comps.map(c =>
+            '<option value="' + (c.file || c.filename) + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
+          ).join('');
+          currentFile = comps[0].file || comps[0].filename;
+          if (comps.length > 1) {
+            document.getElementById('comp-selector-outer').style.display = 'block';
+          }
+          break; // Encontramos competencias, no seguir buscando
         }
       }
-    }
-  } catch (e) { console.log('No index.json:', e); }
+    } catch (e) { console.log('Fallo al leer índice desde:', url, e); }
+  }
   if (!currentFile) {
     document.getElementById('hero-title').textContent = 'No hay competencias publicadas';
     document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquí.</p></div>';
@@ -429,6 +431,30 @@ function onCompetitionChange() {
   loadData();
 }
 
+// Función para escapar caracteres HTML y prevenir XSS
+function escapeHTMLObj(obj) {
+  if (typeof obj === 'string') {
+    return obj.replace(/[&<>'"]/g, tag => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      "'": '&#39;',
+      '"': '&quot;'
+    }[tag]));
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(escapeHTMLObj);
+  }
+  if (typeof obj === 'object' && obj !== null) {
+    const newObj = {};
+    for (let key in obj) {
+      newObj[key] = escapeHTMLObj(obj[key]);
+    }
+    return newObj;
+  }
+  return obj;
+}
+
 async function loadData() {
   document.getElementById('hero-title').textContent = 'Cargando...';
   document.getElementById('hero-sub').textContent = '';
@@ -436,13 +462,19 @@ async function loadData() {
   document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div></div>';
   document.getElementById('full-results-wrap').innerHTML = '';
   try {
-    let url = currentFile + '?v=' + Date.now();
+    // Intentar primero GitHub Pages (local), luego Supabase como fallback
+    const dataUrls = [currentFile + '?v=' + Date.now()];
     if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
-        url = SUPABASE_BASE_URL + '/' + currentFile + '?v=' + Date.now();
+      dataUrls.push(SUPABASE_BASE_URL + '/' + currentFile + '?v=' + Date.now());
     }
-    const r = await fetch(url);
-    if (!r.ok) throw new Error('not found');
-    DATA = await r.json();
+    let loaded = false;
+    for (const url of dataUrls) {
+      try {
+        const r = await fetch(url);
+        if (r.ok) { DATA = await r.json(); loaded = true; break; }
+      } catch(e2) { /* intentar siguiente */ }
+    }
+    if (!loaded) throw new Error('not found');
   } catch (e) {
     document.getElementById('hero-title').textContent = 'Error al cargar';
     document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">Archivo no encontrado</div><p>No se pudo cargar ' + currentFile + '</p></div>';
