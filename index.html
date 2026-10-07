@@ -200,6 +200,16 @@
       footer{padding:20px 12px;font-size:0.82rem}
     }
 
+    /* ── SPORTS SIDEBAR ── */
+    .layout{display:flex;gap:24px;align-items:flex-start}
+    .sports-side{flex:0 0 190px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;position:sticky;top:16px}
+    .sports-title{font-weight:800;margin-bottom:12px;font-size:0.95rem;color:var(--text,#0f172a)}
+    .sport-btn{display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:8px;border-radius:10px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:700;color:var(--muted);font-size:0.9rem}
+    .sport-btn:hover{border-color:#3b6ef6}
+    .sport-btn.active{background:#3b6ef6;color:#fff;border-color:#3b6ef6}
+    .layout-main{flex:1;min-width:0}
+    @media(max-width:700px){.layout{flex-direction:column}.sports-side{position:static;width:100%;display:flex;flex-wrap:wrap;gap:8px}.sports-title{width:100%;margin-bottom:4px}.sport-btn{width:auto;margin-bottom:0}}
+
     /* ── TABLET (641px – 1024px) ── */
     @media(min-width:641px) and (max-width:1024px){
       .events-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
@@ -251,6 +261,17 @@
 </div>
 
 <div class="content">
+  <div class="layout">
+    <aside class="sports-side" id="sports-side">
+      <div class="sports-title">Deportes</div>
+      <button class="sport-btn active" data-sport="" onclick="filterBySport('',this)">🏅 Todos</button>
+      <button class="sport-btn" data-sport="Atletismo" onclick="filterBySport('Atletismo',this)">🏃 Atletismo</button>
+      <button class="sport-btn" data-sport="Natación" onclick="filterBySport('Natación',this)">🏊 Natación</button>
+      <button class="sport-btn" data-sport="Lucha" onclick="filterBySport('Lucha',this)">🤼 Lucha</button>
+      <button class="sport-btn" data-sport="Ciclismo" onclick="filterBySport('Ciclismo',this)">🚴 Ciclismo</button>
+      <button class="sport-btn" data-sport="Patinaje" onclick="filterBySport('Patinaje',this)">⛸️ Patinaje</button>
+    </aside>
+    <div class="layout-main">
   <!-- PODIOS -->
   <div id="sec-podios" class="section active">
     <div class="search-bar">
@@ -312,6 +333,9 @@
     <div id="schedule-wrap"></div>
   </div>
 </div>
+    </div>
+  </div>
+</div>
 
 <footer>Página generada por <strong>AtletismoPro</strong> · Resultados oficiales</footer>
 <div class="refresh-toast" id="refresh-toast"></div>
@@ -320,6 +344,7 @@
 const SUPABASE_BASE_URL = "https://kfcmhlsuoufvlyizqljm.supabase.co/storage/v1/object/public/atletismo-web";
 
 let DATA = null;
+let currentSport = '';
 let currentFile = '';
 
 // ── AUTO-REFRESH ──
@@ -381,6 +406,15 @@ function _showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function filterBySport(sport, btn) {
+  currentSport = sport;
+  document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  filterCards();
+  filterFullResults();
+  filterSiembras();
 }
 
 function switchTab(name, btn) {
@@ -531,7 +565,7 @@ function renderPodios() {
           '</div>'
         )
       : ['<div class="no-results">Sin resultados registrados</div>'];
-    return '<div class="event-card" data-name="' + ev.name + '" data-gender="' + (ev.gender ? ev.gender[0] : '') + '" data-type="' + ev.type + '">' +
+    return '<div class="event-card" data-name="' + ev.name + '" data-gender="' + (ev.gender ? ev.gender[0] : '') + '" data-type="' + ev.type + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
       '<div class="event-card-header"><div><div class="event-name">' + ev.name + '</div><div class="event-detail">' + ev.category + ' · ' + ev.gender + ' · ' + ev.round + '</div></div>' +
       '<span class="event-badge ' + badge + '">' + ev.type + '</span></div>' +
       '<div class="event-results">' + rows.join('') + '</div></div>';
@@ -545,7 +579,8 @@ function filterCards() {
   document.querySelectorAll('.event-card').forEach(c => {
     const show = c.dataset.name.toLowerCase().includes(q)
       && (g === '' || c.dataset.gender === g)
-      && (t === '' || c.dataset.type === t);
+      && (t === '' || c.dataset.type === t)
+      && (currentSport === '' || c.dataset.sport === currentSport);
     c.style.display = show ? '' : 'none';
   });
 }
@@ -643,7 +678,7 @@ function renderFullResults() {
       detailsHtml += '</tbody></table>';
     }
 
-    return '<div class="event-full-section" id="efull-' + idx + '">' +
+    return '<div class="event-full-section" id="efull-' + idx + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
       '<div class="event-full-header" onclick="toggleEvent(' + idx + ')">' +
         '<div><div class="event-full-title">' + ev.name + ' — ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</div>' +
         '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + (ev.jornada ? ' · ' + ev.jornada : '') + '</div></div>' +
@@ -665,7 +700,7 @@ function toggleEvent(idx) {
 function filterFullResults() {
   const q = document.getElementById('search-results').value.toLowerCase();
   document.querySelectorAll('.event-full-section').forEach(sec => {
-    sec.style.display = sec.textContent.toLowerCase().includes(q) ? '' : 'none';
+    sec.style.display = sec.textContent.toLowerCase().includes(q) && (currentSport === '' || sec.dataset.sport === currentSport) ? '' : 'none';
   });
 }
 
@@ -762,7 +797,7 @@ function renderSiembras() {
     });
 
     const status = ev.has_results ? '✅' : '⏳';
-    return '<div class="event-full-section" id="eseed-' + idx + '">' +
+    return '<div class="event-full-section" id="eseed-' + idx + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
       '<div class="event-full-header" onclick="toggleSeed(' + idx + ')">' +
         '<div><div class="event-full-title">' + status + ' ' + ev.name + ' — ' + ev.category + ' (' + (ev.gender?ev.gender[0]:'') + ')</div>' +
         '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + '</div></div>' +
@@ -781,7 +816,7 @@ function toggleSeed(idx) {
 function filterSiembras() {
   const q = document.getElementById('search-siembras').value.toLowerCase();
   document.querySelectorAll('#siembras-wrap .event-full-section').forEach(sec => {
-    sec.style.display = sec.textContent.toLowerCase().includes(q) ? '' : 'none';
+    sec.style.display = sec.textContent.toLowerCase().includes(q) && (currentSport === '' || sec.dataset.sport === currentSport) ? '' : 'none';
   });
 }
 
