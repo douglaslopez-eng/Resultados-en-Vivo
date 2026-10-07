@@ -276,6 +276,7 @@
   <div id="sec-podios" class="section active">
     <div class="search-bar">
       <input class="search-input" type="text" id="search-podios" placeholder="Buscar prueba..." oninput="filterCards()" />
+      <select class="filter-select" id="filter-event-podios" onchange="filterCards()"><option value="">Todas las pruebas</option></select>
       <select class="filter-select" id="filter-gender" onchange="filterCards()">
         <option value="">Todos los géneros</option>
         <option value="M">Masculino</option>
@@ -297,6 +298,7 @@
   <div id="sec-siembras" class="section">
     <div class="search-bar">
       <input class="search-input" type="text" id="search-siembras" placeholder="Buscar atleta, prueba..." oninput="filterSiembras()" />
+      <select class="filter-select" id="filter-event-sembr" onchange="filterSiembras()"><option value="">Todas las pruebas</option></select>
     </div>
     <div id="siembras-wrap"></div>
   </div>
@@ -305,6 +307,7 @@
   <div id="sec-resultados" class="section">
     <div class="search-bar">
       <input class="search-input" type="text" id="search-results" placeholder="Buscar atleta o prueba..." oninput="filterFullResults()" />
+      <select class="filter-select" id="filter-event-results" onchange="filterFullResults()"><option value="">Todas las pruebas</option></select>
     </div>
     <div id="full-results-wrap"></div>
   </div>
@@ -408,10 +411,25 @@ function _showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+function refreshEventOptions() {
+  const sels = ['filter-event-podios', 'filter-event-sembr', 'filter-event-results'];
+  const events = (DATA && DATA.events ? DATA.events : []).filter(ev => currentSport === '' || (ev.sport || 'Atletismo') === currentSport);
+  const names = [];
+  events.forEach(ev => { if (!names.includes(ev.name)) names.push(ev.name); });
+  sels.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Todas las pruebas</option>' + names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
+    if (names.includes(cur)) sel.value = cur;
+  });
+}
+
 function filterBySport(sport, btn) {
   currentSport = sport;
   document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  refreshEventOptions();
   filterCards();
   filterFullResults();
   filterSiembras();
@@ -537,6 +555,7 @@ function render() {
   renderPodios();
   renderSiembras();
   renderFullResults();
+  refreshEventOptions();
   renderMedals();
   renderSchedule();
 }
@@ -576,8 +595,10 @@ function filterCards() {
   const q = document.getElementById('search-podios').value.toLowerCase();
   const g = document.getElementById('filter-gender').value;
   const t = document.getElementById('filter-type').value;
+  const ev = document.getElementById('filter-event-podios').value;
   document.querySelectorAll('.event-card').forEach(c => {
     const show = c.dataset.name.toLowerCase().includes(q)
+      && (ev === '' || c.dataset.name === ev)
       && (g === '' || c.dataset.gender === g)
       && (t === '' || c.dataset.type === t)
       && (currentSport === '' || c.dataset.sport === currentSport);
@@ -678,7 +699,7 @@ function renderFullResults() {
       detailsHtml += '</tbody></table>';
     }
 
-    return '<div class="event-full-section" id="efull-' + idx + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
+    return '<div class="event-full-section" id="efull-' + idx + '" data-evname="' + ev.name + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
       '<div class="event-full-header" onclick="toggleEvent(' + idx + ')">' +
         '<div><div class="event-full-title">' + ev.name + ' — ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</div>' +
         '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + (ev.jornada ? ' · ' + ev.jornada : '') + '</div></div>' +
@@ -699,8 +720,9 @@ function toggleEvent(idx) {
 
 function filterFullResults() {
   const q = document.getElementById('search-results').value.toLowerCase();
-  document.querySelectorAll('.event-full-section').forEach(sec => {
-    sec.style.display = sec.textContent.toLowerCase().includes(q) && (currentSport === '' || sec.dataset.sport === currentSport) ? '' : 'none';
+  const ev = document.getElementById('filter-event-results').value;
+  document.querySelectorAll('#full-results-wrap .event-full-section').forEach(sec => {
+    sec.style.display = sec.textContent.toLowerCase().includes(q) && (currentSport === '' || sec.dataset.sport === currentSport) && (ev === '' || sec.dataset.evname === ev) ? '' : 'none';
   });
 }
 
@@ -797,7 +819,7 @@ function renderSiembras() {
     });
 
     const status = ev.has_results ? '✅' : '⏳';
-    return '<div class="event-full-section" id="eseed-' + idx + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
+    return '<div class="event-full-section" id="eseed-' + idx + '" data-evname="' + ev.name + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
       '<div class="event-full-header" onclick="toggleSeed(' + idx + ')">' +
         '<div><div class="event-full-title">' + status + ' ' + ev.name + ' — ' + ev.category + ' (' + (ev.gender?ev.gender[0]:'') + ')</div>' +
         '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + '</div></div>' +
@@ -815,8 +837,9 @@ function toggleSeed(idx) {
 
 function filterSiembras() {
   const q = document.getElementById('search-siembras').value.toLowerCase();
+  const ev = document.getElementById('filter-event-sembr').value;
   document.querySelectorAll('#siembras-wrap .event-full-section').forEach(sec => {
-    sec.style.display = sec.textContent.toLowerCase().includes(q) && (currentSport === '' || sec.dataset.sport === currentSport) ? '' : 'none';
+    sec.style.display = sec.textContent.toLowerCase().includes(q) && (currentSport === '' || sec.dataset.sport === currentSport) && (ev === '' || sec.dataset.evname === ev) ? '' : 'none';
   });
 }
 
