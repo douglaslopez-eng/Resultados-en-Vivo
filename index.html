@@ -551,13 +551,19 @@ function renderPodios() {
     const podium = (ev.podium || []).slice(0, 3);
     const badge = ev.type === 'Campo' ? 'badge-campo' : 'badge-pista';
     const rows = podium.length
-      ? podium.map((r, i) =>
-          '<div class="podium-row">' +
+      ? podium.map((r, i) => {
+          let mainName = r.athlete_name || '-';
+          let subName = r.athlete_club || '';
+          if (ev.name.toLowerCase().includes('relevo')) {
+              mainName = r.athlete_club || '-';
+              subName = r.athlete_name || '';
+          }
+          return '<div class="podium-row">' +
           '<div class="place-icon">' + placeIcon(i) + '</div>' +
-          '<div class="athlete-info"><div class="athlete-name">' + (r.athlete_name || '-') + '</div><div class="athlete-club">' + (r.athlete_club || '') + '</div></div>' +
+          '<div class="athlete-info"><div class="athlete-name">' + mainName + '</div><div class="athlete-club">' + subName + '</div></div>' +
           '<div class="result-mark">' + (r.result || '-') + '</div>' +
-          '</div>'
-        )
+          '</div>';
+        })
       : ['<div class="no-results">Sin resultados registrados</div>'];
     return '<div class="event-card" data-name="' + ev.name + '" data-gender="' + (ev.gender ? ev.gender[0] : '') + '" data-type="' + ev.type + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
       '<div class="event-card-header"><div><div class="event-name">' + ev.name + '</div><div class="event-detail">' + ev.category + ' · ' + ev.gender + ' · ' + ev.round + '</div></div>' +
@@ -616,6 +622,7 @@ function renderFullResults() {
         rowsHtml += '<tr class="heat-header-row"><td colspan="7">Sin Serie</td></tr>';
       }
 
+      const isRelevo = ev.name.toLowerCase().includes('relevo');
       rowsHtml += heats[hKey].map(r => {
         const rankClass = ['rank-gold', 'rank-silver', 'rank-bronze'][r.rank - 1] || 'rank-other';
         const markClass = r.is_disqualified ? 'dq-cell' : 'mark-cell';
@@ -625,11 +632,21 @@ function renderFullResults() {
         if (r.lane_number)  seedHtml += '<span class="lane-tag">C' + r.lane_number + '</span>';
         else if (r.order_number) seedHtml += '<span class="lane-tag">#' + r.order_number + '</span>';
 
+        let nameCell = '';
+        let clubCell = '';
+        if (isRelevo) {
+          nameCell = '<td class="athlete-cell"><div style="font-weight:800;color:var(--text)">' + (r.athlete_club || '-') + '</div><div style="font-size:0.8rem;color:var(--muted);font-weight:500;margin-top:2px">' + (r.athlete_name || '') + '</div></td>';
+          clubCell = '';
+        } else {
+          nameCell = '<td class="athlete-cell">' + (r.athlete_name || '-') + '</td>';
+          clubCell = '<td style="color:var(--muted)">' + (r.athlete_club || '-') + '</td>';
+        }
+
         return '<tr>' +
           '<td class="' + rankClass + '">' + (r.rank || (r._origIndex + 1)) + '</td>' +
           '<td style="color:var(--muted);font-weight:600">' + (r.bib || '') + '</td>' +
-          '<td class="athlete-cell">' + (r.athlete_name || '-') + '</td>' +
-          '<td style="color:var(--muted)">' + (r.athlete_club || '-') + '</td>' +
+          nameCell +
+          (isRelevo ? '' : clubCell) +
           '<td style="color:var(--muted)">' + (r.athlete_category || '') + '</td>' +
           '<td class="seed-cell">' + (seedHtml || '—') + '</td>' +
           '<td class="' + markClass + '">' + mark + '</td>' +
