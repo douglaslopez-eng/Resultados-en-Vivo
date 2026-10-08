@@ -200,15 +200,7 @@
       footer{padding:20px 12px;font-size:0.82rem}
     }
 
-    /* ── SPORTS SIDEBAR ── */
-    .layout{display:flex;gap:24px;align-items:flex-start}
-    .sports-side{flex:0 0 190px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:16px;position:sticky;top:16px}
-    .sports-title{font-weight:800;margin-bottom:12px;font-size:0.95rem;color:var(--text,#0f172a)}
-    .sport-btn{display:block;width:100%;text-align:left;padding:10px 14px;margin-bottom:8px;border-radius:10px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:700;color:var(--muted);font-size:0.9rem}
-    .sport-btn:hover{border-color:#3b6ef6}
-    .sport-btn.active{background:#3b6ef6;color:#fff;border-color:#3b6ef6}
-    .layout-main{flex:1;min-width:0}
-    @media(max-width:700px){.layout{flex-direction:column}.sports-side{position:static;width:100%;display:flex;flex-wrap:wrap;gap:8px}.sports-title{width:100%;margin-bottom:4px}.sport-btn{width:auto;margin-bottom:0}}
+
 
     /* ── TABLET (641px – 1024px) ── */
     @media(min-width:641px) and (max-width:1024px){
@@ -261,17 +253,6 @@
 </div>
 
 <div class="content">
-  <div class="layout">
-    <aside class="sports-side" id="sports-side">
-      <div class="sports-title">Deportes</div>
-      <button class="sport-btn active" data-sport="" onclick="filterBySport('',this)">🏅 Todos</button>
-      <button class="sport-btn" data-sport="Atletismo" onclick="filterBySport('Atletismo',this)">🏃 Atletismo</button>
-      <button class="sport-btn" data-sport="Natación" onclick="filterBySport('Natación',this)">🏊 Natación</button>
-      <button class="sport-btn" data-sport="Lucha" onclick="filterBySport('Lucha',this)">🤼 Lucha</button>
-      <button class="sport-btn" data-sport="Ciclismo" onclick="filterBySport('Ciclismo',this)">🚴 Ciclismo</button>
-      <button class="sport-btn" data-sport="Patinaje" onclick="filterBySport('Patinaje',this)">⛸️ Patinaje</button>
-    </aside>
-    <div class="layout-main">
   <!-- PODIOS -->
   <div id="sec-podios" class="section active">
     <div class="search-bar">
@@ -282,11 +263,6 @@
         <option value="M">Masculino</option>
         <option value="F">Femenino</option>
         <option value="X">Mixto</option>
-      </select>
-      <select class="filter-select" id="filter-type" onchange="filterCards()">
-        <option value="">Pista y Campo</option>
-        <option value="Pista">Pista</option>
-        <option value="Campo">Campo</option>
       </select>
     </div>
     <div class="events-grid" id="podios-grid">
@@ -336,9 +312,6 @@
     <div id="schedule-wrap"></div>
   </div>
 </div>
-    </div>
-  </div>
-</div>
 
 <footer>Página generada por <strong>AtletismoPro</strong> · Resultados oficiales</footer>
 <div class="refresh-toast" id="refresh-toast"></div>
@@ -347,7 +320,7 @@
 const SUPABASE_BASE_URL = "https://kfcmhlsuoufvlyizqljm.supabase.co/storage/v1/object/public/atletismo-web";
 
 let DATA = null;
-let currentSport = '';
+let allComps = [];
 let currentFile = '';
 
 // ── AUTO-REFRESH ──
@@ -413,7 +386,7 @@ function _showToast(msg) {
 
 function refreshEventOptions() {
   const sels = ['filter-event-podios', 'filter-event-sembr', 'filter-event-results'];
-  const events = (DATA && DATA.events ? DATA.events : []).filter(ev => currentSport === '' || (ev.sport || 'Atletismo') === currentSport);
+  const events = (DATA && DATA.events ? DATA.events : []);
   const names = [];
   events.forEach(ev => { if (!names.includes(ev.name)) names.push(ev.name); });
   sels.forEach(id => {
@@ -425,15 +398,7 @@ function refreshEventOptions() {
   });
 }
 
-function filterBySport(sport, btn) {
-  currentSport = sport;
-  document.querySelectorAll('.sport-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  refreshEventOptions();
-  filterCards();
-  filterFullResults();
-  filterSiembras();
-}
+
 
 function switchTab(name, btn) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -456,14 +421,9 @@ async function init() {
         let comps = Array.isArray(idx) ? idx : (idx.competitions || []);
         comps = comps.filter(c => (c.file || c.filename));
         if (comps.length > 0) {
-          const sel = document.getElementById('comp-select');
-          sel.innerHTML = comps.map(c =>
-            '<option value="' + (c.file || c.filename) + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
-          ).join('');
+          allComps = comps;
           currentFile = comps[0].file || comps[0].filename;
-          if (comps.length > 1) {
-            document.getElementById('comp-selector-outer').style.display = 'block';
-          }
+          rebuildCompSelect();
           break; // Encontramos competencias, no seguir buscando
         }
       }
@@ -481,6 +441,21 @@ async function init() {
 function onCompetitionChange() {
   currentFile = document.getElementById('comp-select').value;
   loadData();
+}
+
+function rebuildCompSelect() {
+  const sel = document.getElementById('comp-select');
+  const comps = allComps;
+  sel.innerHTML = comps.map(c =>
+    '<option value="' + (c.file || c.filename) + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
+  ).join('');
+  document.getElementById('comp-selector-outer').style.display = comps.length > 1 ? 'block' : 'none';
+  if (comps.some(c => (c.file || c.filename) === currentFile)) {
+    sel.value = currentFile;
+  } else {
+    currentFile = comps[0].file || comps[0].filename;
+    sel.value = currentFile;
+  }
 }
 
 // Función para escapar caracteres HTML y prevenir XSS
