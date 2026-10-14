@@ -1,0 +1,40 @@
+﻿# Archivos de escritorio / compilados
+main.py
+auth.py
+auth.db
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+*.bat
+*.iss
+installer/
+backups_atletismo/
+docs_legales/
+web_results/
+*.ico
+*.exe
+*.log
+*.txt
+build_log.txt
+lynx_search.txt
+
+# Scripts de utilidad (no necesarios en web)
+check_db.py
+compare_ages.py
+convert_icon.py
+do_search.py
+find_cats.py
+find_lines.py
+finishlynx.py
+fix_typo.py
+import_registrations.py
+read_lif.py
+search_main.py
+update_categories.py
+test_export.py
+version_info.txt
+
+# Base de datos de autenticacion (sensible)
+auth.db

@@ -1,0 +1,61 @@
+ATLETISMO PRO — SOFTWARE PROPIETARIO
+TODOS LOS DERECHOS RESERVADOS
+
+Copyright (c) 2025-2026 Douglas José López López
+Todos los derechos reservados.
+
+AVISO LEGAL / TERMS OF USE
+
+Este software y su código fuente, incluyendo pero no limitado a los archivos
+main.py, database.py, seeding.py, live_stream.py y cualquier archivo adjunto,
+son propiedad exclusiva de Douglas José López López (en adelante "el Autor").
+
+QUEDA EXPRESAMENTE PROHIBIDO, sin el consentimiento previo y por escrito del Autor:
+
+  1. Copiar, reproducir, distribuir o publicar este software o cualquier parte
+     del mismo, ya sea en formato fuente o binario.
+
+  2. Modificar, adaptar, traducir, realizar trabajos derivados, descompilar,
+     aplicar ingeniería inversa o desensamblar el software.
+
+  3. Sublicenciar, vender, arrendar, transferir o ceder cualquier derecho
+     sobre el software a terceros.
+
+  4. Utilizar el software o cualquiera de sus componentes con fines
+     comerciales sin autorización expresa del Autor.
+
+  5. Eliminar, alterar u ocultar cualquier aviso de copyright, marca comercial
+     u otro aviso propietario contenido en el software.
+
+PROPIEDAD INTELECTUAL
+
+El Autor es titular exclusivo de todos los derechos de propiedad intelectual
+sobre el software, incluyendo derechos de autor (copyright), derechos morales
+y cualquier otro derecho reconocido por la legislación aplicable.
+
+EXCLUSIÓN DE GARANTÍAS
+
+EL SOFTWARE SE PROPORCIONA "TAL CUAL", SIN GARANTÍA DE NINGÚN TIPO, EXPRESA
+O IMPLÍCITA. EN LA MEDIDA MÁXIMA PERMITIDA POR LA LEY, EL AUTOR RENUNCIA A
+TODA GARANTÍA, INCLUYENDO GARANTÍAS DE COMERCIABILIDAD, IDONEIDAD PARA UN
+FIN PARTICULAR Y NO INFRACCIÓN.
+
+LIMITACIÓN DE RESPONSABILIDAD
+
+EN NINGÚN CASO EL AUTOR SERÁ RESPONSABLE DE DAÑOS DIRECTOS, INDIRECTOS,
+INCIDENTALES, ESPECIALES, EJEMPLARES O CONSECUENTES QUE SURJAN DEL USO O
+LA IMPOSIBILIDAD DE USO DE ESTE SOFTWARE.
+
+LEGISLACIÓN APLICABLE
+
+Este acuerdo se rige por las leyes de la República de Honduras y los tratados
+internacionales de propiedad intelectual de los cuales Honduras es signataria,
+incluyendo el Convenio de Berna para la Protección de las Obras Literarias
+y Artísticas.
+
+Para permisos o consultas sobre licenciamiento, contactar al Autor.
+
+─────────────────────────────────────────────────────────────────────────────
+  AtletismoPro v1.0  |  © 2025-2026 Douglas José López López
+  Software de Gestión de Atletismo — Siembras y Resultados
+─────────────────────────────────────────────────────────────────────────────
