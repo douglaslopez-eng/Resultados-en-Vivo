@@ -1,4 +1,4 @@
-﻿# Archivos de escritorio / compilados
+# Archivos de escritorio / compilados
 main.py
 auth.py
 auth.db
@@ -17,6 +17,8 @@ web_results/
 *.exe
 *.log
 *.txt
+!requirements.txt
+!runtime.txt
 build_log.txt
 lynx_search.txt
 
