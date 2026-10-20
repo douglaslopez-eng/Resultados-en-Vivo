@@ -40,3 +40,7 @@ version_info.txt
 
 # Base de datos de autenticacion (sensible)
 auth.db
+
+# Artefactos locales que NUNCA deben subirse (rompen Cloudflare Pages por tamano/nombres)
+Eventos/
+*.db
