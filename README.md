@@ -2,7 +2,7 @@
 
 **AtletismoPro** es la plataforma de consulta de resultados de competencias de atletismo en tiempo real. Accede a marcas, clasificaciones, medallería y programa de eventos.
 
-🌐 **Sitio web:** [https://atletismopro.onrender.com](https://atletismopro.onrender.com)
+🌐 **Sitio web:** https://atletismopro-resultados.pages.dev/
 
 ## ¿Qué puedes consultar?
 
@@ -31,4 +31,4 @@ streamlit run app.py
 \\\
 
 ---
-© 2025-2026 Douglas José López López — Todos los derechos reservados.
+© 2026 Douglas José López López — Todos los derechos reservados.
