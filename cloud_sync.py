@@ -41,21 +41,25 @@ def save_supabase_config(url, key, bucket="atletismo-web"):
 
 
 
-def upload_to_supabase():
+def upload_to_supabase(web_dir=None, json_filename=None):
     """
     Exporta el torneo actual y lo sube a Supabase. El índice se FUSIONA
     con el existente en Supabase para no borrar otras competencias.
     Retorna (exito: bool, mensaje: str, url_publica: str)
+
+    Si se pasan web_dir y json_filename, se usan esos archivos ya exportados
+    en lugar de exportar de nuevo (evita doble exportación desde auto_sync).
     """
     cfg = get_supabase_config()
     if not cfg["url"] or not cfg["key"]:
         return False, "Configura la URL y clave de Supabase primero.", ""
 
     try:
-        # 1. Exportar el torneo actual al directorio local
-        web_dir, json_filename = export_web.export_to_web_dir()
-        if not web_dir or not json_filename:
-            return False, "Error al exportar datos localmente.", ""
+        # 1. Exportar el torneo actual al directorio local (solo si no se pasaron ya)
+        if web_dir is None or json_filename is None:
+            web_dir, json_filename = export_web.export_to_web_dir()
+            if not web_dir or not json_filename:
+                return False, "Error al exportar datos localmente.", ""
 
         supabase_url = cfg["url"].rstrip("/")
         supabase_key = cfg["key"]
@@ -104,18 +108,28 @@ def upload_to_supabase():
             comp_date = ""
             comp_sport = ""
 
-        # 5. Fusionar: agregar/actualizar este torneo sin tocar los demás
-        comps = index_data.get("competitions", [])
+        # 5. Fusionar: agregar/actualizar este torneo sin tocar los demás.
+        #    Comparamos por nombre NORMALIZADO para reemplazar entradas viejas
+        #    (p. ej. con acentos) que apuntaban a un archivo inexistente.
+        target_key = export_web.sanitize_filename(json_filename)
+        comps = []
         found = False
-        for item in comps:
-            if item.get("filename") == json_filename or item.get("file") == json_filename:
-                item["name"] = comp_name
-                item["date"] = comp_date
-                item["filename"] = json_filename
-                item["sport"] = comp_sport
-                item.pop("file", None)  # normalizar a "filename"
-                found = True
-                break
+        for item in index_data.get("competitions", []):
+            fname = item.get("filename") or item.get("file")
+            if not fname:
+                continue
+            if export_web.sanitize_filename(fname) == target_key:
+                if not found:
+                    item["name"] = comp_name
+                    item["date"] = comp_date
+                    item["filename"] = json_filename
+                    item["sport"] = comp_sport
+                    item.pop("file", None)  # normalizar a "filename"
+                    comps.append(item)
+                    found = True
+                # descartar duplicados/entradas antiguas equivalentes
+            else:
+                comps.append(item)
         if not found:
             comps.append({"filename": json_filename, "name": comp_name, "date": comp_date, "sport": comp_sport})
 

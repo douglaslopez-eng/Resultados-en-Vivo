@@ -79,22 +79,43 @@ class WebPublisher:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             startupinfo=startupinfo,
             bufsize=1
         )
 
-        for line in self.ssh_process.stdout:
-            if not self.is_running:
-                break
-            line = line.strip()
-            # pinggy.io outputs the URL as a plain https:// line
-            if line.startswith("https://") and ("pinggy" in line or "run.pinggy" in line):
-                self.public_url = line
-                if self._callback:
-                    self._callback(line)
-                # We got one URL — use it. Continue reading to keep the tunnel alive.
+        try:
+            for line in self.ssh_process.stdout:
+                if not self.is_running:
+                    break
+                line = line.strip()
+                # pinggy.io outputs the URL as a plain https:// line
+                if line.startswith("https://") and ("pinggy" in line or "run.pinggy" in line):
+                    self.public_url = line
+                    if self._callback:
+                        self._callback(line)
+                    # We got one URL — use it. Continue reading to keep the tunnel alive.
 
-        self.ssh_process.wait()
+            self.ssh_process.wait()
+        except ValueError as ve:
+            # Closed pipe / app shutting down — ignore to avoid noise
+            if self.is_running:
+                if self._callback:
+                    self._callback(f"Tunnel pipe closed: {ve}")
+        except OSError as oe:
+            if self.is_running:
+                if self._callback:
+                    self._callback(f"Tunnel read error: {oe}")
+
+    def _safe_callback(self, msg):
+        """Invoca el callback de forma segura, ignorando si la UI ya cerró."""
+        if self._callback:
+            try:
+                self._callback(msg)
+            except RuntimeError:
+                # main thread ya no está en main loop (app cerrada)
+                pass
 
     def _run_tunnel_loop(self):
         """Keep retrying the SSH tunnel if it expires, as long as is_running is True."""
@@ -103,14 +124,14 @@ class WebPublisher:
             try:
                 self._run_tunnel_once()
             except Exception as e:
-                if self.is_running and self._callback:
-                    self._callback(f"Error: {str(e)}")
+                if self.is_running:
+                    self._safe_callback(f"Error: {str(e)}")
             
             if self.is_running:
                 # Tunnel dropped — wait a moment then reconnect
                 time.sleep(retry_delay)
-                if self.is_running and self._callback:
-                    self._callback("__reconnecting__")
+                if self.is_running:
+                    self._safe_callback("__reconnecting__")
 
     def stop(self):
         self.is_running = False

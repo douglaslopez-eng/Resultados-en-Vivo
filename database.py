@@ -47,10 +47,16 @@ def load_last_db_path():
     return os.path.join(DB_DIR, "atletismo.db")
 
 def get_age_mode():
+    r = _delegate("get_age_mode")
+    if r is not None:
+        return r
     data = load_config()
     return data.get("age_mode", "calendario")
 
 def set_age_mode(mode):
+    r = _delegate("set_age_mode", mode)
+    if r is not None:
+        return r
     data = load_config()
     data["age_mode"] = mode
     save_config(data)
@@ -65,19 +71,59 @@ def set_db_path(new_path):
     save_config(data)
 
 def get_db_name():
+    r = _delegate("get_db_name")
+    if r is not None:
+        return r
     return os.path.basename(DB_PATH)
 
 
+# ---------------------------------------------------------------------------
+# Capa de delegación a Supabase (Fase B1)
+# Cuando config.json tiene data_backend == "supabase", las funciones de este
+# módulo delegan en supabase_client.SupabaseDB en vez de hablar SQLite.
+# ---------------------------------------------------------------------------
+_supabase_db = None
+
+
+def _use_supabase():
+    try:
+        cfg = load_config()
+        return cfg.get("data_backend") == "supabase"
+    except Exception:
+        return False
+
+
+def _get_supabase():
+    global _supabase_db
+    if _supabase_db is None:
+        from supabase_client import SupabaseDB, SupabaseConnection
+        _supabase_db = SupabaseDB()
+    return _supabase_db
+
+
+def _delegate(name, *args, **kwargs):
+    if _use_supabase():
+        return getattr(_get_supabase(), name)(*args, **kwargs)
+    return None  # sentinel: llamar código SQLite
+
 
 def get_connection():
-    """Establece una conexión con la base de datos SQLite y habilita claves foráneas."""
+    """Establece una conexión con la base de datos SQLite y habilita claves foráneas.
+    En modo Supabase devuelve un wrapper que traduce .cursor().execute()/fetchall()
+    a llamadas REST."""
+    if _use_supabase():
+        from supabase_client import SupabaseConnection
+        return SupabaseConnection(_get_supabase())
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
 def init_db():
-    """Crea las tablas necesarias en la base de datos si no existen."""
+    """Crea las tablas necesarias en la base de datos si no existen.
+    En modo Supabase solo verifica conectividad (las tablas vienen de schema.sql)."""
+    if _use_supabase():
+        return _get_supabase().init_db()
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -353,6 +399,9 @@ def get_vertical_heights(event_id):
 # --- CATEGORÍAS DINÁMICAS ---
 
 def add_category(name, min_age, max_age):
+    r = _delegate("add_category", name, min_age, max_age)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -367,6 +416,9 @@ def add_category(name, min_age, max_age):
     return success, msg
 
 def get_categories():
+    r = _delegate("get_categories")
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM categories ORDER BY min_age ASC")
@@ -375,6 +427,9 @@ def get_categories():
     return [dict(r) for r in rows]
 
 def update_athlete_full(athlete_id, name, club, category, gender, birth_date):
+    r = _delegate("update_athlete_full", athlete_id, name, club, category, gender, birth_date)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -386,6 +441,9 @@ def update_athlete_full(athlete_id, name, club, category, gender, birth_date):
     conn.close()
 
 def delete_category(cat_id):
+    r = _delegate("delete_category", cat_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM categories WHERE id = ?", (cat_id,))
@@ -412,6 +470,13 @@ def calculate_category_from_birthdate(birth_date_str):
 
         
         categories = get_categories()
+        # Las categorías exclusivas de relevo no aplican a la categoría individual del atleta
+        individual_cats = [c for c in categories if "relevo" not in c["name"].lower() and "relay" not in c["name"].lower()]
+        for cat in individual_cats:
+            if cat["min_age"] <= age <= cat["max_age"]:
+                return cat["name"], age
+
+        # Si solo existían categorías con la palabra relevo o no encajó en las individuales, revisar el resto como respaldo
         for cat in categories:
             if cat["min_age"] <= age <= cat["max_age"]:
                 return cat["name"], age
@@ -425,6 +490,9 @@ def calculate_category_from_birthdate(birth_date_str):
 # --- OPERACIONES DE PRUEBAS (EVENTS) ---
 
 def add_event(name, event_type, category, gender, lanes=8, round_type='Final', sport=None):
+    r = _delegate("add_event", name, event_type, category, gender, lanes, round_type, sport)
+    if r is not None:
+        return r
     if sport is None:
         sport = 'Natación' if event_type == 'Piscina' else 'Atletismo'
     conn = get_connection()
@@ -439,6 +507,9 @@ def add_event(name, event_type, category, gender, lanes=8, round_type='Final', s
     return event_id
 
 def get_events():
+    r = _delegate("get_events")
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM events ORDER BY name ASC")
@@ -447,6 +518,9 @@ def get_events():
     return [dict(r) for r in rows]
 
 def delete_event(event_id):
+    r = _delegate("delete_event", event_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM events WHERE id = ?", (event_id,))
@@ -454,6 +528,9 @@ def delete_event(event_id):
     conn.close()
 
 def update_event(event_id, name, event_type, category, gender, lanes, round_type, sport=None):
+    r = _delegate("update_event", event_id, name, event_type, category, gender, lanes, round_type, sport)
+    if r is not None:
+        return r
     if sport is None:
         sport = 'Natación' if event_type == 'Piscina' else 'Atletismo'
     conn = get_connection()
@@ -468,6 +545,9 @@ def update_event(event_id, name, event_type, category, gender, lanes, round_type
 # --- OPERACIONES DE ATLETAS (ATHLETES) ---
 
 def add_athlete(name, club, category, gender, birth_date=None, bib_number=None):
+    r = _delegate("add_athlete", name, club, category, gender, birth_date, bib_number)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -480,6 +560,9 @@ def add_athlete(name, club, category, gender, birth_date=None, bib_number=None):
     return athlete_id
 
 def get_athletes():
+    r = _delegate("get_athletes")
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM athletes ORDER BY name ASC")
@@ -488,6 +571,9 @@ def get_athletes():
     return [dict(r) for r in rows]
 
 def delete_athlete(athlete_id):
+    r = _delegate("delete_athlete", athlete_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM athletes WHERE id = ?", (athlete_id,))
@@ -495,6 +581,9 @@ def delete_athlete(athlete_id):
     conn.close()
 
 def update_athlete_bib(athlete_id, bib_number):
+    r = _delegate("update_athlete_bib", athlete_id, bib_number)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE athletes SET bib_number = ? WHERE id = ?", (bib_number, athlete_id))
@@ -502,6 +591,9 @@ def update_athlete_bib(athlete_id, bib_number):
     conn.close()
 
 def update_athlete_category(athlete_id, category):
+    r = _delegate("update_athlete_category", athlete_id, category)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE athletes SET category = ? WHERE id = ?", (category, athlete_id))
@@ -512,6 +604,9 @@ def update_athlete_category(athlete_id, category):
 
 def register_athlete_to_event(athlete_id, event_id):
     """Inscribe a un atleta en una prueba."""
+    r = _delegate("register_athlete_to_event", athlete_id, event_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     try:
@@ -527,7 +622,9 @@ def register_athlete_to_event(athlete_id, event_id):
     return success
 
 def unregister_athlete_from_event(athlete_id, event_id):
-    """Elimina la inscripción de un atleta de una prueba."""
+    r = _delegate("unregister_athlete_from_event", athlete_id, event_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute(
@@ -539,6 +636,9 @@ def unregister_athlete_from_event(athlete_id, event_id):
 
 def get_registrations_for_event(event_id):
     """Obtiene los atletas inscritos en una prueba, con sus detalles de siembra y resultados."""
+    r = _delegate("get_registrations_for_event", event_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -568,6 +668,9 @@ def get_events_for_athlete(athlete_id):
 
 def update_registration_seeding(reg_id, heat_number, lane_number, order_number):
     """Actualiza la siembra (serie, carril u orden) de una inscripción."""
+    r = _delegate("update_registration_seeding", reg_id, heat_number, lane_number, order_number)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -579,8 +682,9 @@ def update_registration_seeding(reg_id, heat_number, lane_number, order_number):
     conn.close()
 
 def reset_event_seeding(event_id):
-    """Limpia todos los datos de siembra (serie/carril/orden) de un evento.
-    Debe llamarse ANTES de cualquier re-siembra para evitar datos obsoletos."""
+    r = _delegate("reset_event_seeding", event_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -595,6 +699,9 @@ def reset_event_seeding(event_id):
 
 def update_result(reg_id, result_str, result_value, is_disqualified=0, status='Normal', attempts=None, wind_speed=None):
     """Actualiza la marca/resultado de un atleta inscrito."""
+    r = _delegate("update_result", reg_id, result_str, result_value, is_disqualified, status, attempts, wind_speed)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -633,6 +740,9 @@ def update_result(reg_id, result_str, result_value, is_disqualified=0, status='N
 
 def has_results(event_id):
     """Verifica si una prueba ya tiene resultados digitados (registrados)"""
+    r = _delegate("has_results", event_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM registrations WHERE event_id = ? AND result_value IS NOT NULL", (event_id,))
@@ -723,6 +833,9 @@ def get_podium_for_event(event_id):
     """
     Calcula los 3 mejores lugares para una prueba.
     """
+    r = _delegate("get_podium_for_event", event_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -788,6 +901,9 @@ def get_medal_table(gender_filter=None):
     Los relevos cuentan como 1 medalla para el club.
     gender_filter: None (General), 'Masculino', 'Femenino'.
     """
+    r = _delegate("get_medal_table", gender_filter)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -1083,6 +1199,9 @@ def get_all_combined_marks_for_event(event_id):
 
 def save_competition_dates(start_date, end_date, competition_name=""):
     """Guarda o actualiza las fechas y nombre de la competencia."""
+    r = _delegate("save_competition_dates", start_date, end_date, competition_name)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM competition_info LIMIT 1")
@@ -1098,6 +1217,9 @@ def save_competition_dates(start_date, end_date, competition_name=""):
 
 def get_competition_dates():
     """Obtiene el nombre y fechas de la competencia."""
+    r = _delegate("get_competition_dates")
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT competition_name, start_date, end_date FROM competition_info LIMIT 1")
@@ -1107,10 +1229,28 @@ def get_competition_dates():
         return dict(row)
     return {"competition_name": "", "start_date": "", "end_date": ""}
 
+
+def get_competitions():
+    r = _delegate("get_competitions")
+    if r is not None:
+        return r
+    return []
+
+
+def delete_competition(competition_id):
+    """Elimina una competencia y todos sus datos relacionados (cascada via FK)."""
+    r = _delegate("delete_competition", competition_id)
+    if r is not None:
+        return r
+
+
 # --- OPERACIONES DE JORNADAS ---
 
 def add_jornada(name, display_order=0):
     """Crea una nueva jornada."""
+    r = _delegate("add_jornada", name, display_order)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("INSERT INTO jornadas (name, display_order) VALUES (?, ?)",
@@ -1122,6 +1262,9 @@ def add_jornada(name, display_order=0):
 
 def get_jornadas():
     """Obtiene todas las jornadas ordenadas."""
+    r = _delegate("get_jornadas")
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM jornadas ORDER BY display_order ASC, id ASC")
@@ -1131,6 +1274,9 @@ def get_jornadas():
 
 def delete_jornada(jornada_id):
     """Elimina una jornada y sus horarios asociados."""
+    r = _delegate("delete_jornada", jornada_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM jornadas WHERE id = ?", (jornada_id,))
@@ -1139,6 +1285,9 @@ def delete_jornada(jornada_id):
 
 def update_jornada(jornada_id, name, display_order):
     """Actualiza el nombre y orden de una jornada."""
+    r = _delegate("update_jornada", jornada_id, name, display_order)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("UPDATE jornadas SET name = ?, display_order = ? WHERE id = ?",
@@ -1152,6 +1301,10 @@ def add_schedule_entry(jornada_id, event_id=None, combined_event_id=None, sub_ev
                        sub_event_label=None, start_accred='', end_accred='', entry_time='',
                        event_time='', display_order=0):
     """Agrega una entrada de horario para una prueba en una jornada."""
+    r = _delegate("add_schedule_entry", jornada_id, event_id, combined_event_id, sub_event_index,
+                  sub_event_label, start_accred, end_accred, entry_time, event_time, display_order)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -1168,6 +1321,9 @@ def add_schedule_entry(jornada_id, event_id=None, combined_event_id=None, sub_ev
 
 def get_schedules_for_jornada(jornada_id):
     """Obtiene todos los horarios de una jornada con datos del evento y ordena por hora correcta."""
+    r = _delegate("get_schedules_for_jornada", jornada_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -1219,6 +1375,9 @@ def get_all_schedules_grouped():
 
 def delete_schedule_entry(entry_id):
     """Elimina una entrada de horario."""
+    r = _delegate("delete_schedule_entry", entry_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("DELETE FROM event_schedule WHERE id = ?", (entry_id,))
@@ -1227,6 +1386,9 @@ def delete_schedule_entry(entry_id):
 
 def update_schedule_entry(entry_id, start_accred, end_accred, entry_time, event_time, display_order=0):
     """Actualiza los horarios de una entrada."""
+    r = _delegate("update_schedule_entry", entry_id, start_accred, end_accred, entry_time, event_time, display_order)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -1239,6 +1401,9 @@ def update_schedule_entry(entry_id, start_accred, end_accred, entry_time, event_
 
 def get_schedule_for_event(event_id):
     """Obtiene el horario de un evento específico."""
+    r = _delegate("get_schedule_for_event", event_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -1254,6 +1419,9 @@ def get_schedule_for_event(event_id):
 
 def get_assigned_event_ids():
     """Obtiene los IDs de eventos que ya están asignados a alguna jornada."""
+    r = _delegate("get_assigned_event_ids")
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -1267,6 +1435,9 @@ def get_assigned_event_ids():
 
 def get_assigned_combined_sub_indices(combined_event_id):
     """Obtiene los índices de sub-pruebas combinadas ya asignadas."""
+    r = _delegate("get_assigned_combined_sub_indices", combined_event_id)
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("""
@@ -1279,12 +1450,240 @@ def get_assigned_combined_sub_indices(combined_event_id):
 
 
 def get_athletes_count_per_club():
+    r = _delegate("get_athletes_count_per_club")
+    if r is not None:
+        return r
     conn = get_connection()
     cursor = conn.cursor()
     cursor.execute("SELECT club, COUNT(*) as total FROM athletes GROUP BY club ORDER BY total DESC, club ASC")
     rows = cursor.fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+def get_vertical_heights(event_id):
+    r = _delegate("get_vertical_heights", event_id)
+    if r is not None:
+        return r
+    import json
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT vertical_heights FROM events WHERE id=?", (event_id,))
+    row = cursor.fetchone()
+    conn.close()
+    if row and row["vertical_heights"]:
+        try:
+            return json.loads(row["vertical_heights"])
+        except (json.JSONDecodeError, TypeError):
+            return []
+    return []
+
+def save_vertical_heights(event_id, heights_list):
+    r = _delegate("save_vertical_heights", event_id, heights_list)
+    if r is not None:
+        return r
+    import json
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE events SET vertical_heights=? WHERE id=?",
+                   (json.dumps(heights_list), event_id))
+    conn.commit()
+    conn.close()
+
+def calculate_category_from_birthdate(birth_date_str):
+    r = _delegate("calculate_category_from_birthdate", birth_date_str)
+    if r is not None:
+        return r
+    try:
+        birth = date.fromisoformat(birth_date_str)  # formato YYYY-MM-DD
+        today = date.today()
+        
+        mode = get_age_mode()
+        if mode == "cumplida":
+            ref_date = date(today.year - 1, 12, 31)
+            age = ref_date.year - birth.year - ((ref_date.month, ref_date.day) < (birth.month, birth.day))
+        else:
+            age = today.year - birth.year
+
+        categories = get_categories()
+        individual_cats = [c for c in categories if "relevo" not in c["name"].lower() and "relay" not in c["name"].lower()]
+        for cat in individual_cats:
+            if cat["min_age"] <= age <= cat["max_age"]:
+                return cat["name"], age
+        for cat in categories:
+            if cat["min_age"] <= age <= cat["max_age"]:
+                return cat["name"], age
+        return "Libre", age
+    except (ValueError, TypeError):
+        return None, None
+
+def save_relay_members(event_id, club, members_text):
+    r = _delegate("save_relay_members", event_id, club, members_text)
+    if r is not None:
+        return r
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM relay_members WHERE event_id=? AND club=?", (event_id, club))
+    row = cursor.fetchone()
+    if row:
+        cursor.execute("UPDATE relay_members SET members_text=? WHERE id=?", (members_text, row["id"]))
+    else:
+        cursor.execute("INSERT INTO relay_members (event_id, club, members_text) VALUES (?, ?, ?)", (event_id, club, members_text))
+    conn.commit()
+    conn.close()
+
+def get_relay_members(event_id):
+    r = _delegate("get_relay_members", event_id)
+    if r is not None:
+        return r
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT club, members_text FROM relay_members WHERE event_id = ?", (event_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["club"]: row["members_text"] for row in rows}
+
+def update_personal_best(reg_id, personal_best):
+    r = _delegate("update_personal_best", reg_id, personal_best)
+    if r is not None:
+        return r
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE registrations SET personal_best = ? WHERE id = ?", (personal_best, reg_id))
+    conn.commit()
+    conn.close()
+
+def get_registrations_with_pb(event_id):
+    r = _delegate("get_registrations_with_pb", event_id)
+    if r is not None:
+        return r
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT r.*, a.name AS athlete_name, a.club AS athlete_club,
+               a.category AS athlete_category, a.gender AS athlete_gender,
+               a.bib_number AS athlete_bib
+        FROM registrations r
+        JOIN athletes a ON r.athlete_id = a.id
+        WHERE r.event_id = ?
+        ORDER BY r.personal_best ASC NULLS LAST
+    """, (event_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def get_athlete_history(athlete_id):
+    r = _delegate("get_athlete_history", athlete_id)
+    if r is not None:
+        return r
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT r.result, r.result_value, r.status, r.wind_speed,
+               r.heat_number, r.lane_number, r.is_disqualified,
+               e.name AS event_name, e.type AS event_type,
+               e.category AS event_category, e.gender AS event_gender,
+               e.round AS event_round
+        FROM registrations r
+        JOIN events e ON r.event_id = e.id
+        WHERE r.athlete_id = ?
+        ORDER BY e.name ASC
+    """, (athlete_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+def create_backup(db_path=None):
+    r = _delegate("create_backup", db_path)
+    if r is not None:
+        return r
+    if db_path is None:
+        db_path = DB_PATH
+    if not os.path.exists(db_path):
+        return False, "", "La base de datos no existe."
+    try:
+        backup_dir = get_backup_dir()
+        os.makedirs(backup_dir, exist_ok=True)
+        db_name = os.path.splitext(os.path.basename(db_path))[0]
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_filename = f"{db_name}_backup_{timestamp}.db"
+        backup_path = os.path.join(backup_dir, backup_filename)
+        shutil.copy2(db_path, backup_path)
+        _cleanup_old_backups(backup_dir, db_name, max_keep=10)
+        return True, backup_path, f"Backup creado: {backup_filename}"
+    except Exception as e:
+        return False, "", f"Error al crear backup: {e}"
+
+def init_combined_marks_table():
+    r = _delegate("init_combined_marks_table")
+    if r is not None:
+        return r
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS combined_marks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id INTEGER NOT NULL,
+        athlete_id INTEGER NOT NULL,
+        event_index INTEGER NOT NULL,
+        mark_value TEXT,
+        UNIQUE(event_id, athlete_id, event_index),
+        FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+        FOREIGN KEY (athlete_id) REFERENCES athletes(id) ON DELETE CASCADE
+    );
+    """)
+    conn.commit()
+    conn.close()
+
+def save_combined_mark(event_id, athlete_id, event_index, mark_value):
+    r = _delegate("save_combined_mark", event_id, athlete_id, event_index, mark_value)
+    if r is not None:
+        return r
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO combined_marks (event_id, athlete_id, event_index, mark_value)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(event_id, athlete_id, event_index)
+        DO UPDATE SET mark_value = excluded.mark_value
+    """, (event_id, athlete_id, event_index, mark_value))
+    conn.commit()
+    conn.close()
+
+def get_combined_marks(event_id, athlete_id):
+    r = _delegate("get_combined_marks", event_id, athlete_id)
+    if r is not None:
+        return r
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT event_index, mark_value FROM combined_marks
+        WHERE event_id = ? AND athlete_id = ?
+        ORDER BY event_index ASC
+    """, (event_id, athlete_id))
+    rows = cursor.fetchall()
+    conn.close()
+    return {row["event_index"]: row["mark_value"] for row in rows}
+
+def get_all_combined_marks_for_event(event_id):
+    r = _delegate("get_all_combined_marks_for_event", event_id)
+    if r is not None:
+        return r
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT athlete_id, event_index, mark_value FROM combined_marks
+        WHERE event_id = ?
+        ORDER BY athlete_id ASC, event_index ASC
+    """, (event_id,))
+    rows = cursor.fetchall()
+    conn.close()
+    result = {}
+    for row in rows:
+        aid = row["athlete_id"]
+        if aid not in result:
+            result[aid] = {}
+        result[aid][row["event_index"]] = row["mark_value"]
+    return result
 
 # Inicializar base de datos
 if __name__ == "__main__":

@@ -7,9 +7,11 @@ sys.path.insert(0, r"c:\Users\Douglas Lopez\.gemini\antigravity-ide\scratch\atle
 
 import database
 
-# Apuntar a la BD del torneo de natación (la más reciente)
-DB_PATH = r"c:\Users\Douglas Lopez\.gemini\antigravity-ide\scratch\atletismo_app\Eventos\TORNEO AMISTOSO DE NATACIÓN CCA 2026.db"
-database.set_db_path(DB_PATH)
+# Usar la base de datos activa configurada en config.json (no hardcodear una ruta fija)
+_cfg = json.load(open(r"c:\Users\Douglas Lopez\.gemini\antigravity-ide\scratch\atletismo_app\config.json", encoding="utf-8"))
+_db_path = _cfg.get("last_db_path")
+if _db_path:
+    database.set_db_path(_db_path)
 
 import export_web
 

@@ -1,9 +1,93 @@
 import os
+import re
 import json
+import unicodedata
 import database
 from datetime import datetime
 
+
+def sanitize_filename(name):
+    """Convierte el nombre de una competencia en un nombre de archivo JSON
+    seguro (sin acentos ni caracteres especiales).
+
+    Es crucial que TODOS los lugares (export local, índice, Supabase, GitHub)
+    usen exactamente el mismo nombre, porque Supabase/URLs no conservan los
+    acentos y terminan guardando un archivo distinto al que referencia el
+    índice (por eso una competencia nueva no aparecía en la web).
+    """
+    if not name:
+        name = "competencia"
+    if name.lower().endswith(".db"):
+        name = name[:-3]
+    if name.lower().endswith(".json"):
+        name = name[:-5]
+    # Descomponer acentos (NFKD) y eliminar los caracteres combinantes
+    normalized = unicodedata.normalize("NFKD", name)
+    ascii_name = normalized.encode("ascii", "ignore").decode("ascii")
+    ascii_name = ascii_name.replace(" ", "_")
+    ascii_name = re.sub(r"[^A-Za-z0-9_.-]", "", ascii_name)
+    ascii_name = re.sub(r"_+", "_", ascii_name).strip("_.")
+    if not ascii_name:
+        ascii_name = "competencia"
+    return f"{ascii_name}.json"
+
+
+def _normalize_existing_files(web_dir):
+    """Renombra JSONs antiguos con acentos/caracteres inválidos a su versión
+    ASCII segura, para que el índice, Supabase y GitHub apunten al mismo
+    archivo que realmente existe."""
+    try:
+        entries = os.listdir(web_dir)
+    except OSError:
+        return
+    for fname in entries:
+        if not fname.lower().endswith(".json") or fname == "index.json":
+            continue
+        safe = sanitize_filename(fname)
+        if safe == fname:
+            continue
+        src = os.path.join(web_dir, fname)
+        dst = os.path.join(web_dir, safe)
+        try:
+            if os.path.exists(dst):
+                # Ya existe el destino: conservar el más reciente
+                if os.path.getmtime(src) > os.path.getmtime(dst):
+                    os.replace(src, dst)
+                else:
+                    os.remove(src)
+            else:
+                os.replace(src, dst)
+        except OSError:
+            pass
+
+
+def _remove_stale_variants(web_dir, keep_filename):
+    """Elimina JSONs antiguos cuyo nombre normalizado coincide con el actual
+    (p. ej. versiones con acento) para evitar duplicados en el índice."""
+    try:
+        entries = os.listdir(web_dir)
+    except OSError:
+        return
+    for fname in entries:
+        if not fname.lower().endswith(".json") or fname in ("index.json", keep_filename):
+            continue
+        if sanitize_filename(fname) == keep_filename:
+            try:
+                os.remove(os.path.join(web_dir, fname))
+            except OSError:
+                pass
+
+
 def export_to_web(web_dir):
+    # En modo Supabase la web lee directo de Postgres, no genera JSONs.
+    # Esto evita que archivos muertos se suban a GitHub y que la web use datos obsoletos.
+    try:
+        cfg = database.load_config()
+    except Exception:
+        cfg = {}
+    if cfg.get("data_backend") == "supabase":
+        return
+
     comp = database.get_competition_dates()
     all_events = database.get_events()
     jornadas = database.get_jornadas()
@@ -40,12 +124,26 @@ def export_to_web(web_dir):
             
             sorted_regs = sorted(valid_regs, key=_sort_key, reverse=not order_asc)
 
+        is_relay = database.is_relay_event(ev["name"])
+        relay_members = database.get_relay_members(ev["id"]) if is_relay else {}
+
         results_out = []
+        seen_clubs = set()
         for i, r in enumerate(sorted_regs):
+            club = r.get("athlete_club", "")
+            if is_relay:
+                if club in seen_clubs:
+                    continue
+                seen_clubs.add(club)
+                mem = relay_members.get(club, "")
+                ath_name = mem if mem else r.get("athlete_name", "")
+            else:
+                ath_name = r.get("athlete_name", "")
+
             res_dict = {
-                "rank": i + 1 if not r.get("is_disqualified") else None,
-                "athlete_name": r.get("athlete_name", ""),
-                "athlete_club": r.get("athlete_club", ""),
+                "rank": (len(results_out) + 1) if not r.get("is_disqualified") else None,
+                "athlete_name": ath_name,
+                "athlete_club": club,
                 "athlete_category": r.get("athlete_category", ""),
                 "bib": r.get("athlete_bib", ""),
                 "result": r.get("result", ""),
@@ -146,12 +244,16 @@ def export_to_web(web_dir):
         "schedule": schedule_out
     }
     
-    # Escribir resultados.json (usando el nombre de la bd)
-    json_filename = f"{db_name.replace(' ', '_')}.json"
+    # Escribir resultados.json (usando el nombre de la bd, siempre en ASCII)
+    json_filename = sanitize_filename(db_name)
+    _remove_stale_variants(web_dir, json_filename)
     json_path = os.path.join(web_dir, json_filename)
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(out_data, f, ensure_ascii=False)
         
+    # Normalizar nombres de archivos antiguos (con acentos) antes de indexar
+    _normalize_existing_files(web_dir)
+
     # Escribir index.json con las competencias disponibles
     index_path = os.path.join(web_dir, "index.json")
     comps = []
@@ -196,10 +298,7 @@ def export_to_web_dir():
         if os.path.isdir(_dist):
             base = os.path.dirname(_dist)  # = dist/
             web_dir = _dist
-            db_name = database.get_db_name()
-            if db_name.endswith(".db"):
-                db_name = db_name[:-3]
-            json_filename = f"{db_name.replace(' ', '_')}.json"
+            json_filename = sanitize_filename(database.get_db_name())
             try:
                 export_to_web(web_dir)
                 return web_dir, json_filename
@@ -210,10 +309,7 @@ def export_to_web_dir():
 
     web_dir = os.path.join(base, "web_results")
     os.makedirs(web_dir, exist_ok=True)
-    db_name = database.get_db_name()
-    if db_name.endswith(".db"):
-        db_name = db_name[:-3]
-    json_filename = f"{db_name.replace(' ', '_')}.json"
+    json_filename = sanitize_filename(database.get_db_name())
     try:
         export_to_web(web_dir)
         return web_dir, json_filename
