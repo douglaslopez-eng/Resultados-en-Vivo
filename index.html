@@ -317,11 +317,13 @@
 <div class="refresh-toast" id="refresh-toast"></div>
 
 <script>
-const SUPABASE_BASE_URL = "https://kfcmhlsuoufvlyizqljm.supabase.co/storage/v1/object/public/atletismo-web";
+const SUPABASE_BASE_URL = "https://kfcmhlsuoufvlyizqljm.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtmY21obHN1b3Vmdmx5aXpxbGptIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg5MDQ3MTAsImV4cCI6MjEwNDQ4MDcxMH0.oXescQrDbi_fpFaRG4eLBP48RRzoX3lYyE6cXnYtFWo";
 
 let DATA = null;
+let currentSport = '';
 let allComps = [];
-let currentFile = '';
+let currentCompetitionId = '';
 
 // ── AUTO-REFRESH ──
 const REFRESH_INTERVAL = 60; // segundos
@@ -346,17 +348,235 @@ function _updateCountdownUI() {
   if (el) el.textContent = '· ' + _countdown + 's';
 }
 
+function _sbHeaders() {
+  return {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: 'Bearer ' + SUPABASE_ANON_KEY,
+  };
+}
+
+async function _sbGet(table, params) {
+  const qs = new URLSearchParams(params).toString();
+  const url = SUPABASE_BASE_URL + '/rest/v1/' + table + '?' + qs;
+  const r = await fetch(url, { headers: _sbHeaders() });
+  if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + table);
+  return r.json();
+}
+
 async function _silentRefresh() {
-  if (!currentFile) return;
+  if (!currentCompetitionId) return;
   try {
-    let url = currentFile + '?v=' + Date.now();
-    if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
-        url = SUPABASE_BASE_URL + '/' + currentFile + '?v=' + Date.now();
+    const comp = await _sbGet('competitions', { id: 'eq.' + currentCompetitionId, select: '*' });
+    const events = await _sbGet('events', { competition_id: 'eq.' + currentCompetitionId, order: 'name.asc' });
+    const schedules = await _sbGet('event_schedule', { competition_id: 'eq.' + currentCompetitionId, order: 'event_time.asc,display_order.asc' });
+
+    // Cargar registros por evento (resultados + siembras) y calcular medallero
+    const clubMedals = {};
+    const newData = {
+      competition_info: comp[0] || {},
+      events: events.map(ev => ({
+        ...ev,
+        results: [],
+        seedings: [],
+        podium: [],
+        has_results: false,
+      })),
+      medal_table: [],
+      schedule: schedules.map(s => ({ name: s.jornada_name || '', events: [] })),
+    };
+
+    for (const ev of newData.events) {
+      const podium = [];
+      const regs = await _sbGet('registrations', {
+        competition_id: currentCompetitionId,
+        event_id: 'eq.' + ev.id,
+        order: 'heat_number.asc.nullsfirst,lane_number.asc.nullsfirst,order_number.asc.nullsfirst',
+      });
+      const results = [];
+      const seedings = [];
+      regs.forEach(r => {
+        const row = {
+          id: r.id,
+          athlete_name: r.athlete_name || '',
+          athlete_club: r.athlete_club || '',
+          athlete_category: r.athlete_category || '',
+          bib: r.athlete_bib || '',
+          heat_number: r.heat_number,
+          lane_number: r.lane_number,
+          order_number: r.order_number,
+          personal_best: r.personal_best || '',
+          result: r.result || '',
+          result_value: r.result_value,
+          is_disqualified: r.is_disqualified === 1 || r.is_disqualified === true,
+          status: r.status || 'Normal',
+          wind_speed: r.wind_speed,
+          attempts: r.attempts || [],
+        };
+        if (r.result_value !== null && r.result_value !== undefined) {
+          results.push(row);
+        }
+        seedings.push(row);
+      });
+
+      // Ordenar resultados
+      const orderAsc = ev.type === 'Pista' || ev.type === 'Piscina';
+      results.sort((a, b) => {
+        if (a.is_disqualified !== b.is_disqualified) return a.is_disqualified ? 1 : -1;
+        const va = a.result_value ?? 0;
+        const vb = b.result_value ?? 0;
+        return orderAsc ? va - vb : vb - va;
+      });
+
+      // Calcular medallas (manejo de empates: mismo valor = mismo rango)
+      let currentVal = null;
+      let currentRank = 1;
+      let athletesAtRank = 0;
+      const medalsAwardedToClub = new Set();
+      const isRelay = ev.name.toLowerCase().includes('relevo') || ev.name.toLowerCase().includes('4x');
+
+      results.forEach(r => {
+        const club = r.athlete_club;
+        const val = r.result_value;
+
+        if (val !== currentVal) {
+          currentRank += athletesAtRank;
+          currentVal = val;
+          athletesAtRank = 1;
+        } else {
+          athletesAtRank += 1;
+        }
+
+        if (currentRank > 3) {
+          r.rank = null;
+          return;
+        }
+
+        if (isRelay && medalsAwardedToClub.has(club)) {
+          r.rank = null;
+          return;
+        }
+
+        if (currentRank <= 3) {
+          r.rank = currentRank;
+          if (!clubMedals[club]) clubMedals[club] = { oro: 0, plata: 0, bronce: 0 };
+          if (currentRank === 1) clubMedals[club].oro += 1;
+          else if (currentRank === 2) clubMedals[club].plata += 1;
+          else if (currentRank === 3) clubMedals[club].bronce += 1;
+          if (isRelay) medalsAwardedToClub.add(club);
+        } else {
+          r.rank = null;
+        }
+
+        if (!r.is_disqualified && r.status === 'Normal' && podium.length < 3) {
+          podium.push(r);
+        }
+      });
+
+      // Asignar ranks simples para visualización (no-medalla)
+      let displayRank = 1;
+      results.forEach(r => {
+        if (r.rank === null && !r.is_disqualified && r.status === 'Normal') {
+          r.rank = displayRank++;
+        }
+      });
+
+      ev.results = results;
+      ev.seedings = seedings;
+      ev.podium = podium.filter(p => p.rank !== null).slice(0, 3);
+      ev.has_results = results.length > 0;
     }
-    const r = await fetch(url);
-    if (!r.ok) return;
-    const newData = escapeHTMLObj(await r.json());
-    // Solo re-renderizar si hay cambios reales
+
+    // Construir medallero ordenado
+    const medal_table = Object.entries(clubMedals).map(([club, m]) => ({
+      club,
+      oro: m.oro,
+      plata: m.plata,
+      bronce: m.bronce,
+      total: m.oro + m.plata + m.bronce,
+    })).sort((a, b) => b.oro - a.oro || b.plata - a.plata || b.bronce - a.bronce);
+    medal_table.forEach((m, i) => { m.position = i + 1; });
+    newData.medal_table = medal_table;
+
+    // Construir programa agrupado por jornada
+
+    // Cargar registros por evento (resultados + siembras)
+    for (const ev of newData.events) {
+      const regs = await _sbGet('registrations', {
+        competition_id: currentCompetitionId,
+        event_id: 'eq.' + ev.id,
+        order: 'heat_number.asc.nullsfirst,lane_number.asc.nullsfirst,order_number.asc.nullsfirst',
+      });
+      const results = [];
+      const seedings = [];
+      regs.forEach(r => {
+        const row = {
+          id: r.id,
+          athlete_name: r.athlete_name || '',
+          athlete_club: r.athlete_club || '',
+          athlete_category: r.athlete_category || '',
+          bib: r.athlete_bib || '',
+          heat_number: r.heat_number,
+          lane_number: r.lane_number,
+          order_number: r.order_number,
+          personal_best: r.personal_best || '',
+          result: r.result || '',
+          result_value: r.result_value,
+          is_disqualified: r.is_disqualified === 1 || r.is_disqualified === true,
+          status: r.status || 'Normal',
+          wind_speed: r.wind_speed,
+          attempts: r.attempts || [],
+        };
+        if (r.result_value !== null && r.result_value !== undefined) {
+          results.push(row);
+        }
+        seedings.push(row);
+      });
+
+      // Ordenar resultados
+      const orderAsc = ev.type === 'Pista' || ev.type === 'Piscina';
+      results.sort((a, b) => {
+        if (a.is_disqualified !== b.is_disqualified) return a.is_disqualified ? 1 : -1;
+        const va = a.result_value ?? 0;
+        const vb = b.result_value ?? 0;
+        return orderAsc ? va - vb : vb - va;
+      });
+
+      let rank = 1;
+      const podium = [];
+      results.forEach(r => {
+        if (!r.is_disqualified && r.status === 'Normal') {
+          r.rank = rank++;
+          if (podium.length < 3) podium.push(r);
+        } else {
+          r.rank = null;
+        }
+      });
+
+      ev.results = results;
+      ev.seedings = seedings;
+      ev.podium = podium;
+      ev.has_results = results.length > 0;
+    }
+
+    // Construir programa agrupado por jornada
+    const byJornada = {};
+    schedules.forEach(s => {
+      const jname = s.jornada_name || 'Sin jornada';
+      if (!byJornada[jname]) byJornada[jname] = [];
+      const ev = newData.events.find(e => e.id === s.event_id || e.id === s.combined_event_id);
+      if (ev) {
+        byJornada[jname].push({
+          name: ev.name,
+          category: ev.category,
+          gender: ev.gender,
+          type: ev.type,
+          round: ev.round || 'Final',
+          time: s.event_time,
+        });
+      }
+    });
+    newData.schedule = Object.entries(byJornada).map(([name, events]) => ({ name, events }));
+
     const newStr = JSON.stringify(newData.events || []);
     const oldStr = JSON.stringify((DATA || {}).events || []);
     if (newStr !== oldStr) {
@@ -408,40 +628,32 @@ function switchTab(name, btn) {
 }
 
 async function init() {
-  // Consultar primero Supabase en tiempo real (evita cache de Cloudflare), luego index.json local
-  const urls_to_try = [];
-  if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
-    urls_to_try.push(SUPABASE_BASE_URL + '/indice_competencias.json?v=' + Date.now());
-  }
-  urls_to_try.push('index.json?v=' + Date.now());
-
-  for (const url of urls_to_try) {
-    try {
-      const r = await fetch(url);
-      if (r.ok) {
-        let idx = await r.json();
-        let comps = Array.isArray(idx) ? idx : (idx.competitions || []);
-        comps = comps.filter(c => (c.file || c.filename));
-        if (comps.length > 0) {
-          allComps = comps;
-          currentFile = comps[0].file || comps[0].filename;
-          rebuildCompSelect();
-          break; // Encontramos competencias, no seguir buscando
-        }
-      }
-    } catch (e) { console.log('Fallo al leer índice desde:', url, e); }
-  }
-  if (!currentFile) {
-    document.getElementById('hero-title').textContent = 'No hay competencias publicadas';
-    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquí.</p></div>';
+  if (!SUPABASE_BASE_URL || SUPABASE_BASE_URL === "{{" + "SUPABASE_URL" + "}}") {
+    document.getElementById('hero-title').textContent = 'Supabase no configurado';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚙️</div><div class="empty-title">Falta configurar Supabase</div><p>Configura SUPABASE_BASE_URL y SUPABASE_ANON_KEY en el despliegue.</p></div>';
     return;
   }
-  await loadData();
-  _startCountdown();
+  try {
+    const comps = await _sbGet('competitions', { order: 'updated_at.desc' });
+    if (!comps || comps.length === 0) {
+      document.getElementById('hero-title').textContent = 'No hay competencias publicadas';
+      document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquí.</p></div>';
+      return;
+    }
+    allComps = comps;
+    currentCompetitionId = comps[0].id;
+    rebuildCompSelect();
+    await loadData();
+    _startCountdown();
+  } catch (e) {
+    console.log('Fallo al cargar competencias:', e);
+    document.getElementById('hero-title').textContent = 'Error al cargar';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">No se pudieron cargar las competencias</div></div>';
+  }
 }
 
 function onCompetitionChange() {
-  currentFile = document.getElementById('comp-select').value;
+  currentCompetitionId = document.getElementById('comp-select').value;
   loadData();
 }
 
@@ -449,14 +661,14 @@ function rebuildCompSelect() {
   const sel = document.getElementById('comp-select');
   const comps = allComps;
   sel.innerHTML = comps.map(c =>
-    '<option value="' + (c.file || c.filename) + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
+    '<option value="' + c.id + '">' + c.name + (c.start_date ? '  (' + c.start_date + ')' : '') + '</option>'
   ).join('');
   document.getElementById('comp-selector-outer').style.display = comps.length > 1 ? 'block' : 'none';
-  if (comps.some(c => (c.file || c.filename) === currentFile)) {
-    sel.value = currentFile;
+  if (comps.some(c => c.id === currentCompetitionId)) {
+    sel.value = currentCompetitionId;
   } else {
-    currentFile = comps[0].file || comps[0].filename;
-    sel.value = currentFile;
+    currentCompetitionId = comps[0].id;
+    sel.value = currentCompetitionId;
   }
 }
 
@@ -485,28 +697,17 @@ function escapeHTMLObj(obj) {
 }
 
 async function loadData() {
+  if (!currentCompetitionId) return;
   document.getElementById('hero-title').textContent = 'Cargando...';
   document.getElementById('hero-sub').textContent = '';
   document.getElementById('hero-meta').innerHTML = '';
   document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div></div>';
   document.getElementById('full-results-wrap').innerHTML = '';
   try {
-    // Intentar primero GitHub Pages (local), luego Supabase como fallback
-    const dataUrls = [currentFile + '?v=' + Date.now()];
-    if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
-      dataUrls.push(SUPABASE_BASE_URL + '/' + currentFile + '?v=' + Date.now());
-    }
-    let loaded = false;
-    for (const url of dataUrls) {
-      try {
-        const r = await fetch(url);
-        if (r.ok) { DATA = await r.json(); loaded = true; break; }
-      } catch(e2) { /* intentar siguiente */ }
-    }
-    if (!loaded) throw new Error('not found');
+    await _silentRefresh();
   } catch (e) {
     document.getElementById('hero-title').textContent = 'Error al cargar';
-    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">Archivo no encontrado</div><p>No se pudo cargar ' + currentFile + '</p></div>';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">No se pudieron cargar los datos</div></div>';
     return;
   }
   render();
@@ -577,13 +778,11 @@ function renderPodios() {
 function filterCards() {
   const q = document.getElementById('search-podios').value.toLowerCase();
   const g = document.getElementById('filter-gender').value;
-  const t = document.getElementById('filter-type').value;
   const ev = document.getElementById('filter-event-podios').value;
   document.querySelectorAll('.event-card').forEach(c => {
     const show = c.dataset.name.toLowerCase().includes(q)
       && (ev === '' || c.dataset.name === ev)
       && (g === '' || c.dataset.gender === g)
-      && (t === '' || c.dataset.type === t)
       && (currentSport === '' || c.dataset.sport === currentSport);
     c.style.display = show ? '' : 'none';
   });
