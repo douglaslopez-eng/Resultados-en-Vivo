@@ -54,6 +54,12 @@ def upload_to_supabase(web_dir=None, json_filename=None):
     if not cfg["url"] or not cfg["key"]:
         return False, "Configura la URL y clave de Supabase primero.", ""
 
+    # En modo Supabase los datos ya se escriben directo a Postgres vía
+    # database.py -> SupabaseDB (REST API). No hay JSON que subir a Storage.
+    import database as _db
+    if _db.load_config().get("data_backend") == "supabase":
+        return True, "Datos ya en Supabase Postgres (modo Supabase).", ""
+
     try:
         # 1. Exportar el torneo actual al directorio local (solo si no se pasaron ya)
         if web_dir is None or json_filename is None:
