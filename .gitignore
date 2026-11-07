@@ -44,6 +44,20 @@ auth.db
 # Artefactos locales que NUNCA deben subirse (rompen Cloudflare Pages por tamano/nombres)
 Eventos/
 *.db
+*.db.*
+*.pyz
+*.pkg
+*.zip
+logo.png
+
+# JSON de resultados exportados (datos en Supabase, no en git)
+*_CCA_*.json
+*_Meet.json
+*_SWORDFISH.json
+Prueba.json
+index.json
+Nica_Sprint_Meet.json
+CA MAYOR2026.db
 
 # Config con secrets (no commitear)
 config.json
