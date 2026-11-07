@@ -380,6 +380,8 @@ async function _silentRefresh() {
       schedule: [],
     };
 
+    const clubMedals = {};
+
     // Cargar registros por evento con datos del atleta (embedded resource)
     for (const ev of events) {
       const regs = await _sbGet('registrations', {
@@ -428,7 +430,6 @@ async function _silentRefresh() {
       let currentVal = null;
       let currentRank = 1;
       let athletesAtRank = 0;
-      const clubMedals = {};
       const medalsAwardedToClub = new Set();
       const isRelay = ev.name.toLowerCase().includes('relevo') || ev.name.toLowerCase().includes('4x');
       const podium = [];
@@ -637,7 +638,7 @@ async function loadData() {
 
 function render() {
   const ci = DATA.competition_info || {};
-  const name = ci.competition_name || 'Competencia de Atletismo';
+  const name = ci.name || ci.competition_name || 'Competencia de Atletismo';
   document.getElementById('hero-title').textContent = name;
   document.title = name + ' — AtletismoPro';
 

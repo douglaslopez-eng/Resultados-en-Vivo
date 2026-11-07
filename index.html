@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -30,7 +30,7 @@
     html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 
-    /* â”€â”€ HEADER â”€â”€ */
+    /* ── HEADER ── */
     header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 16px;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
     .header-inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:60px}
     .logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:1.1rem;letter-spacing:-0.5px;color:var(--text)}
@@ -42,13 +42,13 @@
     .refresh-toast{position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:10px 18px;border-radius:12px;font-size:0.85rem;font-weight:600;z-index:9999;opacity:0;transform:translateY(10px);transition:opacity .3s,transform .3s;pointer-events:none}
     .refresh-toast.show{opacity:1;transform:translateY(0)}
 
-    /* â”€â”€ COMPETITION SELECTOR â”€â”€ */
+    /* ── COMPETITION SELECTOR ── */
     .comp-wrap{max-width:1240px;margin:0 auto;padding:16px 16px 0}
     .comp-label{font-size:0.8rem;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
     .comp-selector{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:11px 16px;border-radius:12px;font-size:1rem;font-weight:600;cursor:pointer;outline:none;width:100%;box-shadow:var(--shadow);font-family:'Inter',sans-serif;transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:20px;padding-right:40px}
     .comp-selector:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,0.15)}
 
-    /* â”€â”€ HERO â”€â”€ */
+    /* ── HERO ── */
     .hero{padding:28px 16px 24px;text-align:center}
     .hero h1{font-size:clamp(1.6rem,6vw,3.5rem);font-weight:900;letter-spacing:-1.5px;color:var(--text);margin-bottom:8px;line-height:1.1}
     .hero .sub{color:var(--muted);font-size:1rem;margin-bottom:18px;font-weight:500}
@@ -56,7 +56,7 @@
     .meta-chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);padding:8px 14px;border-radius:999px;font-size:0.85rem;color:var(--muted);box-shadow:var(--shadow);font-weight:500}
     .meta-chip strong{color:var(--text);font-weight:800}
 
-    /* â”€â”€ TABS â”€â”€ */
+    /* ── TABS ── */
     .tabs-wrap{max-width:1240px;margin:0 auto;padding:0 16px}
     .tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;box-shadow:var(--shadow)}
     .tabs::-webkit-scrollbar{display:none}
@@ -64,13 +64,13 @@
     .tab-btn.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 14px rgba(37,99,235,.28)}
     .tab-btn:hover:not(.active){background:var(--surface2);color:var(--text)}
 
-    /* â”€â”€ CONTENT â”€â”€ */
+    /* ── CONTENT ── */
     .content{max-width:1240px;margin:0 auto;padding:20px 16px 80px}
     .section{display:none}
     .section.active{display:block;animation:fadeIn .3s ease-out}
     @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-    /* â”€â”€ SEARCH / FILTERS â”€â”€ */
+    /* ── SEARCH / FILTERS ── */
     .search-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
     .search-input{flex:1;min-width:200px;background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 16px;border-radius:12px;font-size:1rem;font-family:'Inter',sans-serif;outline:none;transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow)}
     .search-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.13)}
@@ -78,7 +78,7 @@
     select.filter-select{background:var(--surface);border:1.5px solid var(--border);color:var(--text);padding:12px 14px;border-radius:12px;font-size:0.9rem;font-weight:600;font-family:'Inter',sans-serif;outline:none;cursor:pointer;box-shadow:var(--shadow);transition:border-color .2s;-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:18px;padding-right:34px}
     select.filter-select:focus{border-color:var(--accent)}
 
-    /* â”€â”€ EVENT CARDS (Podios) â”€â”€ */
+    /* ── EVENT CARDS (Podios) ── */
     .events-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:16px}
     .event-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform .2s,box-shadow .2s;box-shadow:var(--shadow)}
     @media(hover:hover){.event-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}}
@@ -98,7 +98,7 @@
     .athlete-club{font-size:0.82rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500;margin-top:2px}
     .result-mark{font-weight:900;font-size:1rem;color:var(--accent);white-space:nowrap;background:#eff6ff;padding:4px 10px;border-radius:8px;letter-spacing:-.3px}
 
-    /* â”€â”€ FULL RESULTS â”€â”€ */
+    /* ── FULL RESULTS ── */
     .event-full-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;overflow:hidden;box-shadow:var(--shadow)}
     .event-full-header{background:var(--surface2);padding:16px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;transition:background .15s;min-height:48px}
     .event-full-header:hover{background:#f1f5f9}
@@ -126,7 +126,7 @@
     .heat-tag{display:inline-block;background:#eff6ff;color:var(--accent);border-radius:6px;padding:2px 7px;font-size:.75rem;font-weight:700;margin-right:4px}
     .lane-tag{display:inline-block;background:#f0fdf4;color:var(--green);border-radius:6px;padding:2px 7px;font-size:.75rem;font-weight:700}
 
-    /* â”€â”€ MEDALLERO â”€â”€ */
+    /* ── MEDALLERO ── */
     .medals-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
     .medals-table{width:100%;border-collapse:collapse;font-size:0.9rem;min-width:340px}
     .medals-table th{background:var(--surface2);padding:12px 16px;text-align:left;color:var(--muted);font-weight:700;font-size:0.78rem;letter-spacing:.5px;text-transform:uppercase;border-bottom:2px solid var(--border)}
@@ -141,7 +141,7 @@
     .total-count{font-weight:900;color:var(--text);font-size:1.05rem}
     .row-1st td{background:#fffbeb!important}
 
-    /* â”€â”€ PROGRAMA â”€â”€ */
+    /* ── PROGRAMA ── */
     .schedule-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;box-shadow:var(--shadow)}
     .jornada-header{background:var(--surface2);padding:14px 18px;font-weight:800;color:var(--green);font-size:1rem;border-bottom:1px solid var(--border)}
     .schedule-table{width:100%;border-collapse:collapse;font-size:0.9rem;min-width:300px}
@@ -151,7 +151,7 @@
     .schedule-table tbody tr:hover td{background:var(--surface2)}
     .time-cell{font-weight:900;color:var(--accent);font-size:0.92rem;letter-spacing:-.3px}
 
-    /* â”€â”€ ESTADOS VACÃOS â”€â”€ */
+    /* ── ESTADOS VACÍOS ── */
     .empty-state{text-align:center;padding:60px 20px;color:var(--muted)}
     .empty-icon{font-size:3.5rem;margin-bottom:12px;opacity:.5}
     .empty-title{font-size:1.15rem;font-weight:700;color:var(--text);margin-bottom:8px}
@@ -161,7 +161,7 @@
     footer{text-align:center;padding:24px 16px;color:var(--muted);font-size:0.88rem;border-top:1px solid var(--border);background:var(--surface)}
     footer strong{color:var(--text)}
 
-    /* â”€â”€ MOBILE (â‰¤ 640px) â”€â”€ */
+    /* ── MOBILE (≤ 640px) ── */
     @media(max-width:640px){
       .header-inner{height:56px}
       .logo{font-size:1rem;gap:8px}
@@ -202,7 +202,7 @@
 
 
 
-    /* â”€â”€ TABLET (641px â€“ 1024px) â”€â”€ */
+    /* ── TABLET (641px – 1024px) ── */
     @media(min-width:641px) and (max-width:1024px){
       .events-grid{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
       .hero h1{font-size:2.4rem}
@@ -218,7 +218,7 @@
 <header>
   <div class="header-inner">
     <div class="logo">
-      <div class="logo-icon">ðŸƒ</div>
+      <div class="logo-icon">🏃</div>
       AtletismoPro
     </div>
     <div class="live-badge" onclick="manualRefresh()" title="Clic para actualizar ahora">
@@ -244,11 +244,11 @@
 
 <div class="tabs-wrap">
   <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('podios',this)">ðŸ† Podios</button>
-    <button class="tab-btn" onclick="switchTab('siembras',this)">ðŸŒ± Siembras</button>
-    <button class="tab-btn" onclick="switchTab('resultados',this)">ðŸ“‹ Resultados</button>
-    <button class="tab-btn" onclick="switchTab('medallero',this)">ðŸ¥‡ Medallero</button>
-    <button class="tab-btn" onclick="switchTab('programa',this)">ðŸ“… Programa</button>
+    <button class="tab-btn active" onclick="switchTab('podios',this)">🏆 Podios</button>
+    <button class="tab-btn" onclick="switchTab('siembras',this)">🌱 Siembras</button>
+    <button class="tab-btn" onclick="switchTab('resultados',this)">📋 Resultados</button>
+    <button class="tab-btn" onclick="switchTab('medallero',this)">🥇 Medallero</button>
+    <button class="tab-btn" onclick="switchTab('programa',this)">📅 Programa</button>
   </div>
 </div>
 
@@ -259,7 +259,7 @@
       <input class="search-input" type="text" id="search-podios" placeholder="Buscar prueba..." oninput="filterCards()" />
       <select class="filter-select" id="filter-event-podios" onchange="filterCards()"><option value="">Todas las pruebas</option></select>
       <select class="filter-select" id="filter-gender" onchange="filterCards()">
-        <option value="">Todos los gÃ©neros</option>
+        <option value="">Todos los géneros</option>
         <option value="M">Masculino</option>
         <option value="F">Femenino</option>
         <option value="X">Mixto</option>
@@ -295,10 +295,10 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Club / DelegaciÃ³n</th>
-            <th>ðŸ¥‡ Oro</th>
-            <th>ðŸ¥ˆ Plata</th>
-            <th>ðŸ¥‰ Bronce</th>
+            <th>Club / Delegación</th>
+            <th>🥇 Oro</th>
+            <th>🥈 Plata</th>
+            <th>🥉 Bronce</th>
             <th>Total</th>
           </tr>
         </thead>
@@ -313,7 +313,7 @@
   </div>
 </div>
 
-<footer>PÃ¡gina generada por <strong>AtletismoPro</strong> Â· Resultados oficiales</footer>
+<footer>Página generada por <strong>AtletismoPro</strong> · Resultados oficiales</footer>
 <div class="refresh-toast" id="refresh-toast"></div>
 
 <script>
@@ -325,7 +325,7 @@ let allComps = [];
 let currentCompetitionId = '';
 let currentSport = '';
 
-// â”€â”€ AUTO-REFRESH â”€â”€
+// ── AUTO-REFRESH ──
 const REFRESH_INTERVAL = 60; // segundos
 let _refreshTimer = null;
 let _countdown = REFRESH_INTERVAL;
@@ -345,7 +345,7 @@ function _startCountdown() {
 
 function _updateCountdownUI() {
   const el = document.getElementById('refresh-countdown');
-  if (el) el.textContent = 'Â· ' + _countdown + 's';
+  if (el) el.textContent = '· ' + _countdown + 's';
 }
 
 function _sbHeaders() {
@@ -377,6 +377,8 @@ async function _silentRefresh() {
       medal_table: [],
       schedule: [],
     };
+
+    const clubMedals = {};
 
     // Cargar registros por evento con datos del atleta (embedded resource)
     for (const ev of events) {
@@ -426,7 +428,6 @@ async function _silentRefresh() {
       let currentVal = null;
       let currentRank = 1;
       let athletesAtRank = 0;
-      const clubMedals = {};
       const medalsAwardedToClub = new Set();
       const isRelay = ev.name.toLowerCase().includes('relevo') || ev.name.toLowerCase().includes('4x');
       const podium = [];
@@ -502,19 +503,19 @@ async function _silentRefresh() {
     if (newStr !== oldStr) {
       DATA = newData;
       render();
-      _showToast('âœ… Resultados actualizados');
+      _showToast('✅ Resultados actualizados');
     }
   } catch (e) {
     console.log('Auto-refresh error:', e);
     document.getElementById('hero-title').textContent = 'Error al cargar';
-    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">âš ï¸</div><div class="empty-title">No se pudieron cargar los datos</div><p>Verifica que SUPABASE_BASE_URL y SUPABASE_ANON_KEY estÃ©n configurados.</p></div>';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">No se pudieron cargar los datos</div><p>Verifica que SUPABASE_BASE_URL y SUPABASE_ANON_KEY estén configurados.</p></div>';
   } finally {
     _startCountdown();
   }
 }
 
 function manualRefresh() {
-  _showToast('ðŸ”„ Actualizando...');
+  _showToast('🔄 Actualizando...');
   _silentRefresh();
 }
 
@@ -550,14 +551,14 @@ function switchTab(name, btn) {
 async function init() {
   if (!SUPABASE_BASE_URL || SUPABASE_BASE_URL === "{{" + "SUPABASE_URL" + "}}") {
     document.getElementById('hero-title').textContent = 'Supabase no configurado';
-    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">âš™ï¸</div><div class="empty-title">Falta configurar Supabase</div><p>Configura SUPABASE_BASE_URL y SUPABASE_ANON_KEY en el despliegue.</p></div>';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚙️</div><div class="empty-title">Falta configurar Supabase</div><p>Configura SUPABASE_BASE_URL y SUPABASE_ANON_KEY en el despliegue.</p></div>';
     return;
   }
   try {
     const comps = await _sbGet('competitions', { order: 'updated_at.desc' });
     if (!comps || comps.length === 0) {
       document.getElementById('hero-title').textContent = 'No hay competencias publicadas';
-      document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">ðŸ</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquÃ­.</p></div>';
+      document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquí.</p></div>';
       return;
     }
     allComps = comps;
@@ -568,7 +569,7 @@ async function init() {
   } catch (e) {
     console.log('Fallo al cargar competencias:', e);
     document.getElementById('hero-title').textContent = 'Error al cargar';
-    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">âš ï¸</div><div class="empty-title">No se pudieron cargar las competencias</div></div>';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">No se pudieron cargar las competencias</div></div>';
   }
 }
 
@@ -592,7 +593,7 @@ function rebuildCompSelect() {
   }
 }
 
-// FunciÃ³n para escapar caracteres HTML y prevenir XSS
+// Función para escapar caracteres HTML y prevenir XSS
 function escapeHTMLObj(obj) {
   if (typeof obj === 'string') {
     return obj.replace(/[&<>'"]/g, tag => ({
@@ -627,7 +628,7 @@ async function loadData() {
     await _silentRefresh();
   } catch (e) {
     document.getElementById('hero-title').textContent = 'Error al cargar';
-    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">âš ï¸</div><div class="empty-title">No se pudieron cargar los datos</div></div>';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">No se pudieron cargar los datos</div></div>';
     return;
   }
   render();
@@ -635,20 +636,20 @@ async function loadData() {
 
 function render() {
   const ci = DATA.competition_info || {};
-  const name = ci.competition_name || 'Competencia de Atletismo';
+  const name = ci.name || ci.competition_name || 'Competencia de Atletismo';
   document.getElementById('hero-title').textContent = name;
-  document.title = name + ' â€” AtletismoPro';
+  document.title = name + ' — AtletismoPro';
 
-  const dates = [ci.start_date, ci.end_date].filter(Boolean).join(' â€” ');
+  const dates = [ci.start_date, ci.end_date].filter(Boolean).join(' — ');
   document.getElementById('hero-sub').textContent = dates;
 
   const evCount = (DATA.events || []).length;
   const athSet = new Set();
   (DATA.events || []).forEach(ev => (ev.results || []).forEach(r => athSet.add(r.athlete_name)));
   document.getElementById('hero-meta').innerHTML =
-    '<div class="meta-chip">ðŸ… <strong>' + evCount + '</strong>&nbsp;pruebas</div>' +
-    '<div class="meta-chip">ðŸ‘¤ <strong>' + athSet.size + '</strong>&nbsp;atletas</div>' +
-    '<div class="meta-chip">ðŸ›ï¸ <strong>' + (DATA.medal_table || []).length + '</strong>&nbsp;clubes</div>';
+    '<div class="meta-chip">🏅 <strong>' + evCount + '</strong>&nbsp;pruebas</div>' +
+    '<div class="meta-chip">👤 <strong>' + athSet.size + '</strong>&nbsp;atletas</div>' +
+    '<div class="meta-chip">🏛️ <strong>' + (DATA.medal_table || []).length + '</strong>&nbsp;clubes</div>';
 
   renderPodios();
   renderSiembras();
@@ -659,15 +660,15 @@ function render() {
 }
 
 function placeIcon(i) {
-  return ['ðŸ¥‡', 'ðŸ¥ˆ', 'ðŸ¥‰'][i] || '<span style="font-size:.95rem;color:var(--muted);font-weight:800">' + (i + 1) + 'Â°</span>';
+  return ['🥇', '🥈', '🥉'][i] || '<span style="font-size:.95rem;color:var(--muted);font-weight:800">' + (i + 1) + '°</span>';
 }
 
-/* â”€â”€ PODIOS â”€â”€ */
+/* ── PODIOS ── */
 function renderPodios() {
   const grid = document.getElementById('podios-grid');
   const events = DATA.events || [];
   if (!events.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">ðŸ</div><div class="empty-title">Sin resultados aÃºn</div></div>';
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin resultados aún</div></div>';
     return;
   }
   grid.innerHTML = events.map(ev => {
@@ -689,7 +690,7 @@ function renderPodios() {
         })
       : ['<div class="no-results">Sin resultados registrados</div>'];
     return '<div class="event-card" data-name="' + ev.name + '" data-gender="' + (ev.gender ? ev.gender[0] : '') + '" data-type="' + ev.type + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
-      '<div class="event-card-header"><div><div class="event-name">' + ev.name + '</div><div class="event-detail">' + ev.category + ' Â· ' + ev.gender + ' Â· ' + ev.round + '</div></div>' +
+      '<div class="event-card-header"><div><div class="event-name">' + ev.name + '</div><div class="event-detail">' + ev.category + ' · ' + ev.gender + ' · ' + ev.round + '</div></div>' +
       '<span class="event-badge ' + badge + '">' + ev.type + '</span></div>' +
       '<div class="event-results">' + rows.join('') + '</div></div>';
   }).join('');
@@ -710,12 +711,12 @@ function filterCards() {
   });
 }
 
-/* â”€â”€ RESULTADOS COMPLETOS â”€â”€ */
+/* ── RESULTADOS COMPLETOS ── */
 function renderFullResults() {
   const wrap = document.getElementById('full-results-wrap');
   const events = DATA.events || [];
   if (!events.length) {
-    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">ðŸ“‹</div><div class="empty-title">Sin resultados</div></div>';
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Sin resultados</div></div>';
     return;
   }
   wrap.innerHTML = events.map((ev, idx) => {
@@ -771,7 +772,7 @@ function renderFullResults() {
           nameCell +
           (isRelevo ? '' : clubCell) +
           '<td style="color:var(--muted)">' + (r.athlete_category || '') + '</td>' +
-          '<td class="seed-cell">' + (seedHtml || 'â€”') + '</td>' +
+          '<td class="seed-cell">' + (seedHtml || '—') + '</td>' +
           '<td class="' + markClass + '">' + mark + '</td>' +
           '</tr>';
       }).join('');
@@ -816,13 +817,13 @@ function renderFullResults() {
 
     return '<div class="event-full-section" id="efull-' + idx + '" data-evname="' + ev.name + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
       '<div class="event-full-header" onclick="toggleEvent(' + idx + ')">' +
-        '<div><div class="event-full-title">' + ev.name + ' â€” ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</div>' +
-        '<div class="event-full-sub">' + ev.type + ' Â· ' + ev.round + (ev.jornada ? ' Â· ' + ev.jornada : '') + '</div></div>' +
-        '<span class="toggle-icon">â–¾</span>' +
+        '<div><div class="event-full-title">' + ev.name + ' — ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</div>' +
+        '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + (ev.jornada ? ' · ' + ev.jornada : '') + '</div></div>' +
+        '<span class="toggle-icon">▾</span>' +
       '</div>' +
       '<div class="event-table-wrap"><div class="table-scroll">' +
         (rowsHtml
-          ? '<table class="results-table"><thead><tr><th>#</th><th>Dorsal</th><th>Nombre</th><th>Club</th><th>Cat.</th><th>AsignaciÃ³n</th><th>Marca</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>'
+          ? '<table class="results-table"><thead><tr><th>#</th><th>Dorsal</th><th>Nombre</th><th>Club</th><th>Cat.</th><th>Asignación</th><th>Marca</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>'
           : '<div class="no-results" style="padding:20px 24px">Sin resultados registrados</div>') +
         (detailsHtml ? '<div style="overflow-x: auto; margin-top: 10px;">' + detailsHtml + '</div>' : '') +
       '</div></div></div>';
@@ -841,12 +842,12 @@ function filterFullResults() {
   });
 }
 
-/* â”€â”€ MEDALLERO â”€â”€ */
+/* ── MEDALLERO ── */
 function renderMedals() {
   const body = document.getElementById('medals-body');
   const table = DATA.medal_table || [];
   if (!table.length) {
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Sin datos de medallero aÃºn</td></tr>';
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Sin datos de medallero aún</td></tr>';
     return;
   }
   body.innerHTML = table.map((row, i) =>
@@ -861,7 +862,7 @@ function renderMedals() {
   ).join('');
 }
 
-/* â”€â”€ SIEMBRAS â”€â”€ */
+/* ── SIEMBRAS ── */
 function renderSiembras() {
   const wrap = document.getElementById('siembras-wrap');
   const events = (DATA.events || []).filter(ev => {
@@ -869,7 +870,7 @@ function renderSiembras() {
     return seeds.some(s => s.heat_number || s.lane_number || s.order_number);
   });
   if (!events.length) {
-    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">ðŸŒ±</div><div class="empty-title">Sin siembras asignadas</div><p>Las siembras aparecerÃ¡n cuando el organizador las configure.</p></div>';
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">🌱</div><div class="empty-title">Sin siembras asignadas</div><p>Las siembras aparecerán cuando el organizador las configure.</p></div>';
     return;
   }
   wrap.innerHTML = events.map((ev, idx) => {
@@ -915,30 +916,30 @@ function renderSiembras() {
       rowsHtml += heats[hKey].map(s => {
         if (isPista) {
           return '<tr>' +
-            '<td><span class="lane-tag">C' + (s.lane_number||'â€”') + '</span></td>' +
-            '<td style="color:var(--muted);font-weight:600">' + (s.bib||'â€”') + '</td>' +
-            '<td class="athlete-cell">' + (s.athlete_name||'â€”') + '</td>' +
-            '<td style="color:var(--muted)">' + (s.athlete_club||'â€”') + '</td>' +
-            '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'â€”') + '</td>' +
+            '<td><span class="lane-tag">C' + (s.lane_number||'—') + '</span></td>' +
+            '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
+            '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
+            '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
+            '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
             '</tr>';
         } else {
           return '<tr>' +
-            '<td><span class="lane-tag">#' + (s.order_number||'â€”') + '</span></td>' +
-            '<td style="color:var(--muted);font-weight:600">' + (s.bib||'â€”') + '</td>' +
-            '<td class="athlete-cell">' + (s.athlete_name||'â€”') + '</td>' +
-            '<td style="color:var(--muted)">' + (s.athlete_club||'â€”') + '</td>' +
-            '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'â€”') + '</td>' +
+            '<td><span class="lane-tag">#' + (s.order_number||'—') + '</span></td>' +
+            '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
+            '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
+            '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
+            '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
             '</tr>';
         }
       }).join('');
     });
 
-    const status = ev.has_results ? 'âœ…' : 'â³';
+    const status = ev.has_results ? '✅' : '⏳';
     return '<div class="event-full-section" id="eseed-' + idx + '" data-evname="' + ev.name + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
       '<div class="event-full-header" onclick="toggleSeed(' + idx + ')">' +
-        '<div><div class="event-full-title">' + status + ' ' + ev.name + ' â€” ' + ev.category + ' (' + (ev.gender?ev.gender[0]:'') + ')</div>' +
-        '<div class="event-full-sub">' + ev.type + ' Â· ' + ev.round + '</div></div>' +
-        '<span class="toggle-icon">â–¾</span>' +
+        '<div><div class="event-full-title">' + status + ' ' + ev.name + ' — ' + ev.category + ' (' + (ev.gender?ev.gender[0]:'') + ')</div>' +
+        '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + '</div></div>' +
+        '<span class="toggle-icon">▾</span>' +
       '</div>' +
       '<div class="event-table-wrap"><div class="table-scroll">' +
         '<table class="results-table"><thead><tr>' + header + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' +
@@ -958,22 +959,22 @@ function filterSiembras() {
   });
 }
 
-/* â”€â”€ PROGRAMA â”€â”€ */
+/* ── PROGRAMA ── */
 function renderSchedule() {
   const wrap = document.getElementById('schedule-wrap');
   const jornadas = DATA.schedule || [];
   if (!jornadas.length) {
-    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">ðŸ“…</div><div class="empty-title">Sin programa cargado</div></div>';
+    wrap.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">Sin programa cargado</div></div>';
     return;
   }
   wrap.innerHTML = jornadas.map(j =>
     '<div class="schedule-section">' +
-    '<div class="jornada-header">ðŸ“… ' + j.name + '</div>' +
+    '<div class="jornada-header">📅 ' + j.name + '</div>' +
     '<div class="table-scroll"><table class="schedule-table">' +
-    '<thead><tr><th>Hora</th><th>Prueba</th><th>CategorÃ­a</th><th>Ronda</th><th>Tipo</th></tr></thead><tbody>' +
+    '<thead><tr><th>Hora</th><th>Prueba</th><th>Categoría</th><th>Ronda</th><th>Tipo</th></tr></thead><tbody>' +
     (j.events || []).map(ev =>
       '<tr>' +
-      '<td class="time-cell">' + (ev.time || 'â€”') + '</td>' +
+      '<td class="time-cell">' + (ev.time || '—') + '</td>' +
       '<td style="font-weight:700;color:var(--text)">' + ev.name + '</td>' +
       '<td>' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</td>' +
       '<td style="color:var(--muted);font-weight:600">' + (ev.round || 'Final') + '</td>' +
@@ -988,4 +989,3 @@ init();
 </script>
 </body>
 </html>
-
