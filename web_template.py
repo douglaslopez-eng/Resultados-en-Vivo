@@ -368,10 +368,17 @@ async function _sbGet(table, params) {
 async function _silentRefresh() {
   if (!currentCompetitionId) return;
   try {
-    const comp = await _sbGet('competitions', { id: 'eq.' + currentCompetitionId, select: '*' });
-    const events = await _sbGet('events', { competition_id: 'eq.' + currentCompetitionId, order: 'name.asc' });
-    const schedules = await _sbGet('event_schedule', { competition_id: 'eq.' + currentCompetitionId, order: 'event_time.asc,display_order.asc' });
-    const jornadas = await _sbGet('jornadas', { competition_id: 'eq.' + currentCompetitionId, order: 'display_order.asc,id.asc' });
+    const [comp, events, schedules, jornadas, allRegs] = await Promise.all([
+      _sbGet('competitions', { id: 'eq.' + currentCompetitionId, select: '*' }),
+      _sbGet('events', { competition_id: 'eq.' + currentCompetitionId, order: 'name.asc' }),
+      _sbGet('event_schedule', { competition_id: 'eq.' + currentCompetitionId, order: 'event_time.asc,display_order.asc' }),
+      _sbGet('jornadas', { competition_id: 'eq.' + currentCompetitionId, order: 'display_order.asc,id.asc' }),
+      _sbGet('registrations', {
+        competition_id: 'eq.' + currentCompetitionId,
+        select: '*,athletes(name,club,bib_number)',
+        order: 'heat_number.asc.nullsfirst,lane_number.asc.nullsfirst,order_number.asc.nullsfirst',
+      }),
+    ]);
 
     const newData = {
       competition_info: comp[0] || {},
@@ -382,19 +389,26 @@ async function _silentRefresh() {
 
     const clubMedals = {};
 
-    // Cargar registros por evento con datos del atleta (embedded resource)
-    for (const ev of events) {
-      const regs = await _sbGet('registrations', {
-        competition_id: currentCompetitionId,
-        event_id: 'eq.' + ev.id,
-        select: '*,athletes(name,club,bib_number)',
-        order: 'heat_number.asc.nullsfirst,lane_number.asc.nullsfirst,order_number.asc.nullsfirst',
-      });
+    // Agrupar registros por event_id en memoria
+    const regsByEvent = {};
+    (allRegs || []).forEach(r => {
+      const eid = r.event_id;
+      if (!regsByEvent[eid]) regsByEvent[eid] = [];
+      regsByEvent[eid].push(r);
+    });
+
+    // Procesar eventos
+    for (const ev of (events || [])) {
+      const regs = regsByEvent[ev.id] || [];
 
       const results = [];
       const seedings = [];
       regs.forEach(r => {
         const ath = r.athletes || {};
+        let atts = r.attempts || [];
+        if (typeof atts === 'string') {
+          try { atts = JSON.parse(atts); } catch(e) { atts = []; }
+        }
         const row = {
           id: r.id,
           athlete_name: ath.name || r.athlete_name || '',
@@ -410,7 +424,7 @@ async function _silentRefresh() {
           is_disqualified: r.is_disqualified === 1 || r.is_disqualified === true,
           status: r.status || 'Normal',
           wind_speed: r.wind_speed,
-          attempts: r.attempts || [],
+          attempts: atts,
         };
         if (r.result_value !== null && r.result_value !== undefined) {
           results.push(row);
@@ -564,7 +578,13 @@ async function init() {
       return;
     }
     allComps = comps;
-    currentCompetitionId = comps[0].id;
+    const urlParams = new URLSearchParams(window.location.search);
+    const compParam = urlParams.get('comp') || urlParams.get('id');
+    if (compParam && comps.some(c => c.id === compParam)) {
+      currentCompetitionId = compParam;
+    } else {
+      currentCompetitionId = comps[0].id;
+    }
     rebuildCompSelect();
     await loadData();
     _startCountdown();
