@@ -318,7 +318,6 @@
 
 <script>
 const SUPABASE_BASE_URL = "https://kfcmhlsuoufvlyizqljm.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_GDgn9DPMBfBYSerz7-oQuA_TO3ixiwt";
 
 let DATA = null;
 let allComps = [];
@@ -506,6 +505,29 @@ async function _silentRefresh() {
   } finally {
     _startCountdown();
   }
+}async function _silentRefresh() {
+  if (!currentFile) return;
+  try {
+    let url = currentFile + '?v=' + Date.now();
+    if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
+        url = SUPABASE_BASE_URL + '/' + currentFile + '?v=' + Date.now();
+    }
+    const r = await fetch(url);
+    if (!r.ok) return;
+    const newData = escapeHTMLObj(await r.json());
+    // Solo re-renderizar si hay cambios reales
+    const newStr = JSON.stringify(newData.events || []);
+    const oldStr = JSON.stringify((DATA || {}).events || []);
+    if (newStr !== oldStr) {
+      DATA = newData;
+      render();
+      _showToast('✅ Resultados actualizados');
+    }
+  } catch (e) {
+    console.log('Auto-refresh error:', e);
+  } finally {
+    _startCountdown();
+  }
 }
 
 function manualRefresh() {
@@ -567,6 +589,36 @@ async function init() {
     document.getElementById('hero-title').textContent = 'Error al cargar';
     document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">No se pudieron cargar las competencias</div></div>';
   }
+}async function init() {
+  // Siempre intentar primero index.json local (GitHub Pages), luego Supabase como fallback
+  const urls_to_try = ['index.json?v=' + Date.now()];
+  if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
+    urls_to_try.push(SUPABASE_BASE_URL + '/indice_competencias.json?v=' + Date.now());
+  }
+  for (const url of urls_to_try) {
+    try {
+      const r = await fetch(url);
+      if (r.ok) {
+        let idx = await r.json();
+        let comps = Array.isArray(idx) ? idx : (idx.competitions || []);
+        comps = comps.filter(c => (c.file || c.filename));
+        if (comps.length > 0) {
+          allComps = comps;
+          currentFile = comps[0].file || comps[0].filename;
+          rebuildCompSelect();
+          break; // Encontramos competencias, no seguir buscando
+        }
+      }
+    } catch (e) { console.log('Fallo al leer índice desde:', url, e); }
+  }
+  if (!currentFile) {
+    document.getElementById('hero-title').textContent = 'No hay competencias publicadas';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">🏁</div><div class="empty-title">Sin competencias publicadas</div><p>Publica una competencia desde AtletismoPro para verla aquí.</p></div>';
+    return;
+  }
+  await loadData();
+  _startCountdown();
+}
 
 function onCompetitionChange() {
   currentCompetitionId = document.getElementById('comp-select').value;
@@ -585,6 +637,24 @@ function rebuildCompSelect() {
   } else {
     currentCompetitionId = comps[0].id;
     sel.value = currentCompetitionId;
+  }
+}function onCompetitionChange() {
+  currentFile = document.getElementById('comp-select').value;
+  loadData();
+}
+
+function rebuildCompSelect() {
+  const sel = document.getElementById('comp-select');
+  const comps = allComps;
+  sel.innerHTML = comps.map(c =>
+    '<option value="' + (c.file || c.filename) + '">' + c.name + (c.date ? '  (' + c.date + ')' : '') + '</option>'
+  ).join('');
+  document.getElementById('comp-selector-outer').style.display = comps.length > 1 ? 'block' : 'none';
+  if (comps.some(c => (c.file || c.filename) === currentFile)) {
+    sel.value = currentFile;
+  } else {
+    currentFile = comps[0].file || comps[0].filename;
+    sel.value = currentFile;
   }
 }
 
@@ -624,6 +694,32 @@ async function loadData() {
   } catch (e) {
     document.getElementById('hero-title').textContent = 'Error al cargar';
     document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">No se pudieron cargar los datos</div></div>';
+    return;
+  }
+  render();
+}async function loadData() {
+  document.getElementById('hero-title').textContent = 'Cargando...';
+  document.getElementById('hero-sub').textContent = '';
+  document.getElementById('hero-meta').innerHTML = '';
+  document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="spinner"></div></div>';
+  document.getElementById('full-results-wrap').innerHTML = '';
+  try {
+    // Intentar primero GitHub Pages (local), luego Supabase como fallback
+    const dataUrls = [currentFile + '?v=' + Date.now()];
+    if (SUPABASE_BASE_URL && SUPABASE_BASE_URL !== "{{" + "SUPABASE_URL" + "}}") {
+      dataUrls.push(SUPABASE_BASE_URL + '/' + currentFile + '?v=' + Date.now());
+    }
+    let loaded = false;
+    for (const url of dataUrls) {
+      try {
+        const r = await fetch(url);
+        if (r.ok) { DATA = await r.json(); loaded = true; break; }
+      } catch(e2) { /* intentar siguiente */ }
+    }
+    if (!loaded) throw new Error('not found');
+  } catch (e) {
+    document.getElementById('hero-title').textContent = 'Error al cargar';
+    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">Archivo no encontrado</div><p>No se pudo cargar ' + currentFile + '</p></div>';
     return;
   }
   render();
