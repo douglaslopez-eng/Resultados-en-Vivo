@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Resultados - AtletismoPro</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏃</text></svg>" />
   <meta name="description" content="Resultados en vivo de la competencia de atletismo." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
@@ -323,12 +324,12 @@ const SUPABASE_ANON_KEY = "sb_publishable_GDgn9DPMBfBYSerz7-oQuA_TO3ixiwt";
 let DATA = null;
 let allComps = [];
 let currentCompetitionId = '';
-let currentSport = '';
 
 // ── AUTO-REFRESH ──
 const REFRESH_INTERVAL = 60; // segundos
 let _refreshTimer = null;
 let _countdown = REFRESH_INTERVAL;
+let _initialLoadDone = false; // evita que un error transitorio de auto-refresh borre la página
 
 function _startCountdown() {
   clearInterval(_refreshTimer);
@@ -512,6 +513,20 @@ async function _silentRefresh() {
     });
     newData.schedule = Object.entries(byJornada).map(([name, events]) => ({ name, events }));
 
+    // Ordenar eventos por su posición en el programa (display_order del schedule) y no alfabéticamente
+    const evOrder = {};
+    (schedules || []).forEach(s => {
+      if (s.event_id == null) return;
+      const o = (s.display_order != null) ? s.display_order : 9999;
+      if (evOrder[s.event_id] === undefined || o < evOrder[s.event_id]) evOrder[s.event_id] = o;
+    });
+    newData.events.sort((a, b) => {
+      const oa = evOrder[a.id] !== undefined ? evOrder[a.id] : 9999;
+      const ob = evOrder[b.id] !== undefined ? evOrder[b.id] : 9999;
+      if (oa !== ob) return oa - ob;
+      return String(a.name).localeCompare(String(b.name), 'es');
+    });
+
     const newStr = JSON.stringify(newData.events || []);
     const oldStr = JSON.stringify((DATA || {}).events || []);
     if (newStr !== oldStr) {
@@ -521,8 +536,14 @@ async function _silentRefresh() {
     }
   } catch (e) {
     console.log('Auto-refresh error:', e);
-    document.getElementById('hero-title').textContent = 'Error al cargar';
-    document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">No se pudieron cargar los datos</div><p>Verifica que SUPABASE_BASE_URL y SUPABASE_ANON_KEY estén configurados.</p></div>';
+    if (!_initialLoadDone) {
+      // Primer fallo de carga (o de cambio de competencia): mostrar estado de error completo
+      document.getElementById('hero-title').textContent = 'Error al cargar';
+      document.getElementById('podios-grid').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">No se pudieron cargar los datos</div><p>Verifica que SUPABASE_BASE_URL y SUPABASE_ANON_KEY estén configurados.</p></div>';
+    } else {
+      // Fallo transitorio en auto-refresh: avisar sin destruir los resultados visibles
+      _showToast('⚠️ Error de conexión — reintentando automáticamente');
+    }
   } finally {
     _startCountdown();
   }
@@ -550,7 +571,7 @@ function refreshEventOptions() {
     const sel = document.getElementById(id);
     if (!sel) return;
     const cur = sel.value;
-    sel.innerHTML = '<option value="">Todas las pruebas</option>' + names.map(n => '<option value="' + n + '">' + n + '</option>').join('');
+    sel.innerHTML = '<option value="">Todas las pruebas</option>' + names.map(n => '<option value="' + esc(n) + '">' + esc(n) + '</option>').join('');
     if (names.includes(cur)) sel.value = cur;
   });
 }
@@ -598,11 +619,20 @@ function onCompetitionChange() {
   loadData();
 }
 
+// Mantiene ?comp=... en la URL para que los enlaces compartidos abran la competencia correcta
+function _updateCompUrl() {
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set('comp', currentCompetitionId);
+    history.replaceState(null, '', url);
+  } catch (e) { /* ignorar */ }
+}
+
 function rebuildCompSelect() {
   const sel = document.getElementById('comp-select');
   const comps = allComps;
   sel.innerHTML = comps.map(c =>
-    '<option value="' + c.id + '">' + c.name + (c.start_date ? '  (' + c.start_date + ')' : '') + '</option>'
+    '<option value="' + esc(c.id) + '">' + esc(c.name) + (c.start_date ? '  (' + esc(c.start_date) + ')' : '') + '</option>'
   ).join('');
   document.getElementById('comp-selector-outer').style.display = comps.length > 1 ? 'block' : 'none';
   if (comps.some(c => c.id === currentCompetitionId)) {
@@ -613,32 +643,20 @@ function rebuildCompSelect() {
   }
 }
 
-// Función para escapar caracteres HTML y prevenir XSS
-function escapeHTMLObj(obj) {
-  if (typeof obj === 'string') {
-    return obj.replace(/[&<>'"]/g, tag => ({
-      '&': '&amp;',
-      '<': '&lt;',
-      '>': '&gt;',
-      "'": '&#39;',
-      '"': '&quot;'
-    }[tag]));
-  }
-  if (Array.isArray(obj)) {
-    return obj.map(escapeHTMLObj);
-  }
-  if (typeof obj === 'object' && obj !== null) {
-    const newObj = {};
-    for (let key in obj) {
-      newObj[key] = escapeHTMLObj(obj[key]);
-    }
-    return newObj;
-  }
-  return obj;
+// Escapa caracteres especiales HTML al interpolar datos en innerHTML (previene inyección / render roto)
+function esc(value) {
+  return String(value ?? '').replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;'
+  }[tag]));
 }
 
 async function loadData() {
   if (!currentCompetitionId) return;
+  _updateCompUrl();
   document.getElementById('hero-title').textContent = 'Cargando...';
   document.getElementById('hero-sub').textContent = '';
   document.getElementById('hero-meta').innerHTML = '';
@@ -652,6 +670,7 @@ async function loadData() {
     return;
   }
   render();
+  if (!_initialLoadDone) _initialLoadDone = true;
 }
 
 function render() {
@@ -665,7 +684,7 @@ function render() {
 
   const evCount = (DATA.events || []).length;
   const athSet = new Set();
-  (DATA.events || []).forEach(ev => (ev.results || []).forEach(r => athSet.add(r.athlete_name)));
+  (DATA.events || []).forEach(ev => (ev.seedings || ev.results || []).forEach(r => { if (r.athlete_name) athSet.add(r.athlete_name); }));
   document.getElementById('hero-meta').innerHTML =
     '<div class="meta-chip">🏅 <strong>' + evCount + '</strong>&nbsp;pruebas</div>' +
     '<div class="meta-chip">👤 <strong>' + athSet.size + '</strong>&nbsp;atletas</div>' +
@@ -693,7 +712,6 @@ function renderPodios() {
   }
   grid.innerHTML = events.map(ev => {
     const podium = (ev.podium || []).slice(0, 3);
-    const badge = ev.type === 'Campo' ? 'badge-campo' : 'badge-pista';
     const rows = podium.length
       ? podium.map((r, i) => {
           let mainName = r.athlete_name || '-';
@@ -704,14 +722,14 @@ function renderPodios() {
           }
           return '<div class="podium-row">' +
           '<div class="place-icon">' + placeIcon(i) + '</div>' +
-          '<div class="athlete-info"><div class="athlete-name">' + mainName + '</div><div class="athlete-club">' + subName + '</div></div>' +
-          '<div class="result-mark">' + (r.result || '-') + '</div>' +
+          '<div class="athlete-info"><div class="athlete-name">' + esc(mainName) + '</div><div class="athlete-club">' + esc(subName) + '</div></div>' +
+          '<div class="result-mark">' + esc(r.result || '-') + '</div>' +
           '</div>';
         })
       : ['<div class="no-results">Sin resultados registrados</div>'];
-    return '<div class="event-card" data-name="' + ev.name + '" data-gender="' + (ev.gender ? ev.gender[0] : '') + '" data-type="' + ev.type + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
-      '<div class="event-card-header"><div><div class="event-name">' + ev.name + '</div><div class="event-detail">' + ev.category + ' · ' + ev.gender + ' · ' + ev.round + '</div></div>' +
-      '<span class="event-badge ' + badge + '">' + ev.type + '</span></div>' +
+    return '<div class="event-card" data-name="' + esc(ev.name) + '" data-gender="' + esc(ev.gender ? ev.gender[0] : '') + '" data-type="' + esc(ev.type) + '">' +
+      '<div class="event-card-header"><div><div class="event-name">' + esc(ev.name) + '</div><div class="event-detail">' + esc(ev.category) + ' · ' + esc(ev.gender) + ' · ' + esc(ev.round) + '</div></div>' +
+      '<span class="event-badge ' + (ev.type === 'Campo' ? 'badge-campo' : 'badge-pista') + '">' + esc(ev.type) + '</span></div>' +
       '<div class="event-results">' + rows.join('') + '</div></div>';
   }).join('');
 }
@@ -719,14 +737,11 @@ function renderPodios() {
 function filterCards() {
   const q = document.getElementById('search-podios').value.toLowerCase();
   const g = document.getElementById('filter-gender').value;
-  const t = document.getElementById('filter-type').value;
   const ev = document.getElementById('filter-event-podios').value;
   document.querySelectorAll('.event-card').forEach(c => {
     const show = c.dataset.name.toLowerCase().includes(q)
       && (ev === '' || c.dataset.name === ev)
-      && (g === '' || c.dataset.gender === g)
-      && (t === '' || c.dataset.type === t)
-      && (currentSport === '' || c.dataset.sport === currentSport);
+      && (g === '' || c.dataset.gender === g);
     c.style.display = show ? '' : 'none';
   });
 }
@@ -744,6 +759,7 @@ function renderFullResults() {
     // Group results by heat
     const heats = {};
     const isCampo = ev.type === 'Campo';
+    const isRelevo = ev.name.toLowerCase().includes('relevo');
     const hasHeats = !isCampo && (ev.results || []).some(r => r.heat_number);
     
     (ev.results || []).forEach((r, i) => {
@@ -759,48 +775,48 @@ function renderFullResults() {
     });
 
     let rowsHtml = '';
+    const heatColspan = isRelevo ? 6 : 7;
     heatKeys.forEach(hKey => {
       if (hasHeats && hKey !== 'General') {
-        rowsHtml += '<tr class="heat-header-row"><td colspan="7">Heat: ' + hKey + '</td></tr>';
+        rowsHtml += '<tr class="heat-header-row"><td colspan="' + heatColspan + '">Heat: ' + hKey + '</td></tr>';
       } else if (hasHeats && hKey === 'General') {
-        rowsHtml += '<tr class="heat-header-row"><td colspan="7">Sin Serie</td></tr>';
+        rowsHtml += '<tr class="heat-header-row"><td colspan="' + heatColspan + '">Sin Serie</td></tr>';
       }
 
-      const isRelevo = ev.name.toLowerCase().includes('relevo');
       rowsHtml += heats[hKey].map(r => {
         const rankClass = ['rank-gold', 'rank-silver', 'rank-bronze'][r.rank - 1] || 'rank-other';
         const markClass = r.is_disqualified ? 'dq-cell' : 'mark-cell';
         const mark = r.is_disqualified ? (r.status || 'DQ') : (r.result || '-');
 
         let seedHtml = '';
-        if (r.lane_number)  seedHtml += '<span class="lane-tag">C' + r.lane_number + '</span>';
-        else if (r.order_number) seedHtml += '<span class="lane-tag">#' + r.order_number + '</span>';
+        if (r.lane_number)  seedHtml += '<span class="lane-tag">C' + esc(r.lane_number) + '</span>';
+        else if (r.order_number) seedHtml += '<span class="lane-tag">#' + esc(r.order_number) + '</span>';
 
         let nameCell = '';
         let clubCell = '';
         if (isRelevo) {
-          nameCell = '<td class="athlete-cell"><div style="font-weight:800;color:var(--text)">' + (r.athlete_club || '-') + '</div><div style="font-size:0.8rem;color:var(--muted);font-weight:500;margin-top:2px">' + (r.athlete_name || '') + '</div></td>';
+          nameCell = '<td class="athlete-cell"><div style="font-weight:800;color:var(--text)">' + esc(r.athlete_club || '-') + '</div><div style="font-size:0.8rem;color:var(--muted);font-weight:500;margin-top:2px">' + esc(r.athlete_name || '') + '</div></td>';
           clubCell = '';
         } else {
-          nameCell = '<td class="athlete-cell">' + (r.athlete_name || '-') + '</td>';
-          clubCell = '<td style="color:var(--muted)">' + (r.athlete_club || '-') + '</td>';
+          nameCell = '<td class="athlete-cell">' + esc(r.athlete_name || '-') + '</td>';
+          clubCell = '<td style="color:var(--muted)">' + esc(r.athlete_club || '-') + '</td>';
         }
 
         return '<tr>' +
           '<td class="' + rankClass + '">' + (r.rank || (r._origIndex + 1)) + '</td>' +
-          '<td style="color:var(--muted);font-weight:600">' + (r.bib || '') + '</td>' +
+          '<td style="color:var(--muted);font-weight:600">' + esc(r.bib || '') + '</td>' +
           nameCell +
           (isRelevo ? '' : clubCell) +
-          '<td style="color:var(--muted)">' + (r.athlete_category || '') + '</td>' +
+          '<td style="color:var(--muted)">' + esc(r.athlete_category || '') + '</td>' +
           '<td class="seed-cell">' + (seedHtml || '—') + '</td>' +
-          '<td class="' + markClass + '">' + mark + '</td>' +
+          '<td class="' + markClass + '">' + esc(mark) + '</td>' +
           '</tr>';
       }).join('');
     });
 
     let detailsHtml = '';
     if (isCampo && ev.results && ev.results.length > 0) {
-      detailsHtml = '<div style="margin-top: 15px; background: #0ea5e9; color: white; padding: 6px; text-align: center; font-weight: bold; border-radius: 4px 4px 0 0; font-size: 0.95rem;">DETALLE DE LA PRUEBA<br><span style="font-size: 0.8rem; font-weight: normal;">' + ev.name + ' - ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ') - ' + ev.round + '</span></div>';
+      detailsHtml = '<div style="margin-top: 15px; background: #0ea5e9; color: white; padding: 6px; text-align: center; font-weight: bold; border-radius: 4px 4px 0 0; font-size: 0.95rem;">DETALLE DE LA PRUEBA<br><span style="font-size: 0.8rem; font-weight: normal;">' + esc(ev.name) + ' - ' + esc(ev.category) + ' (' + esc(ev.gender ? ev.gender[0] : '') + ') - ' + esc(ev.round) + '</span></div>';
       
       let isVertical = ev.heights && ev.heights.length > 0;
       let headersHtml = '';
@@ -808,7 +824,7 @@ function renderFullResults() {
       if (isVertical) {
         numCols = ev.heights.length;
         ev.heights.forEach(h => {
-          headersHtml += '<th>' + h + '</th>';
+          headersHtml += '<th>' + esc(h) + '</th>';
         });
       } else {
         for (let i = 1; i <= 6; i++) {
@@ -820,30 +836,32 @@ function renderFullResults() {
       detailsHtml += ev.results.map((r, i) => {
         let attemptsHtml = '';
         for (let j = 0; j < numCols; j++) {
-           let att = (r.attempts && r.attempts[j]) ? r.attempts[j] : '';
-           if (isVertical && att.includes('-')) {
+           let att = (r.attempts && r.attempts[j] !== undefined && r.attempts[j] !== null && r.attempts[j] !== '') ? r.attempts[j] : '';
+           if (isVertical && typeof att === 'string' && att.includes('-')) {
              att = att.split('-')[1].trim();
            }
-           attemptsHtml += '<td style="text-align:center;">' + att + '</td>';
+           attemptsHtml += '<td style="text-align:center;">' + esc(att) + '</td>';
         }
         return '<tr>' +
           '<td>' + (r.rank || (i + 1)) + '</td>' +
-          '<td class="athlete-cell" style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + (r.athlete_name || '-') + '</td>' +
+          '<td class="athlete-cell" style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(r.athlete_name || '-') + '</td>' +
           attemptsHtml +
           '</tr>';
       }).join('');
       detailsHtml += '</tbody></table>';
     }
 
-    return '<div class="event-full-section" id="efull-' + idx + '" data-evname="' + ev.name + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
+    return '<div class="event-full-section" id="efull-' + idx + '" data-evname="' + esc(ev.name) + '">' +
       '<div class="event-full-header" onclick="toggleEvent(' + idx + ')">' +
-        '<div><div class="event-full-title">' + ev.name + ' — ' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</div>' +
-        '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + (ev.jornada ? ' · ' + ev.jornada : '') + '</div></div>' +
+        '<div><div class="event-full-title">' + esc(ev.name) + ' — ' + esc(ev.category) + ' (' + esc(ev.gender ? ev.gender[0] : '') + ')</div>' +
+        '<div class="event-full-sub">' + esc(ev.type) + ' · ' + esc(ev.round) + (ev.jornada ? ' · ' + esc(ev.jornada) : '') + '</div></div>' +
         '<span class="toggle-icon">▾</span>' +
       '</div>' +
       '<div class="event-table-wrap"><div class="table-scroll">' +
         (rowsHtml
-          ? '<table class="results-table"><thead><tr><th>#</th><th>Dorsal</th><th>Nombre</th><th>Club</th><th>Cat.</th><th>Asignación</th><th>Marca</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>'
+          ? '<table class="results-table"><thead><tr>' + (isRelevo
+              ? '<th>#</th><th>Dorsal</th><th>Equipo / Delegación</th><th>Cat.</th><th>Asignación</th><th>Marca</th>'
+              : '<th>#</th><th>Dorsal</th><th>Nombre</th><th>Club</th><th>Cat.</th><th>Asignación</th><th>Marca</th>') + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>'
           : '<div class="no-results" style="padding:20px 24px">Sin resultados registrados</div>') +
         (detailsHtml ? '<div style="overflow-x: auto; margin-top: 10px;">' + detailsHtml + '</div>' : '') +
       '</div></div></div>';
@@ -858,7 +876,7 @@ function filterFullResults() {
   const q = document.getElementById('search-results').value.toLowerCase();
   const ev = document.getElementById('filter-event-results').value;
   document.querySelectorAll('#full-results-wrap .event-full-section').forEach(sec => {
-    sec.style.display = sec.textContent.toLowerCase().includes(q) && (currentSport === '' || sec.dataset.sport === currentSport) && (ev === '' || sec.dataset.evname === ev) ? '' : 'none';
+    sec.style.display = sec.textContent.toLowerCase().includes(q) && (ev === '' || sec.dataset.evname === ev) ? '' : 'none';
   });
 }
 
@@ -873,7 +891,7 @@ function renderMedals() {
   body.innerHTML = table.map((row, i) =>
     '<tr class="' + (i === 0 ? 'row-1st' : '') + '">' +
     '<td class="pos">' + row.position + '</td>' +
-    '<td class="club-name">' + row.club + '</td>' +
+    '<td class="club-name">' + esc(row.club) + '</td>' +
     '<td class="gold-count">' + row.oro + '</td>' +
     '<td class="silver-count">' + row.plata + '</td>' +
     '<td class="bronze-count">' + row.bronce + '</td>' +
@@ -928,7 +946,7 @@ function renderSiembras() {
       });
 
       if (hasHeats && hKey !== 'General') {
-        rowsHtml += '<tr class="heat-header-row"><td colspan="5">Serie: ' + hKey + '</td></tr>';
+        rowsHtml += '<tr class="heat-header-row"><td colspan="5">Serie: ' + esc(hKey) + '</td></tr>';
       } else if (hasHeats && hKey === 'General') {
         rowsHtml += '<tr class="heat-header-row"><td colspan="5">Sin Serie</td></tr>';
       }
@@ -936,29 +954,29 @@ function renderSiembras() {
       rowsHtml += heats[hKey].map(s => {
         if (isPista) {
           return '<tr>' +
-            '<td><span class="lane-tag">C' + (s.lane_number||'—') + '</span></td>' +
-            '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
-            '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
-            '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
-            '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
+            '<td><span class="lane-tag">C' + esc(s.lane_number||'—') + '</span></td>' +
+            '<td style="color:var(--muted);font-weight:600">' + esc(s.bib||'—') + '</td>' +
+            '<td class="athlete-cell">' + esc(s.athlete_name||'—') + '</td>' +
+            '<td style="color:var(--muted)">' + esc(s.athlete_club||'—') + '</td>' +
+            '<td style="color:var(--muted);font-size:.9rem">' + esc(s.personal_best||'—') + '</td>' +
             '</tr>';
         } else {
           return '<tr>' +
-            '<td><span class="lane-tag">#' + (s.order_number||'—') + '</span></td>' +
-            '<td style="color:var(--muted);font-weight:600">' + (s.bib||'—') + '</td>' +
-            '<td class="athlete-cell">' + (s.athlete_name||'—') + '</td>' +
-            '<td style="color:var(--muted)">' + (s.athlete_club||'—') + '</td>' +
-            '<td style="color:var(--muted);font-size:.9rem">' + (s.personal_best||'—') + '</td>' +
+            '<td><span class="lane-tag">#' + esc(s.order_number||'—') + '</span></td>' +
+            '<td style="color:var(--muted);font-weight:600">' + esc(s.bib||'—') + '</td>' +
+            '<td class="athlete-cell">' + esc(s.athlete_name||'—') + '</td>' +
+            '<td style="color:var(--muted)">' + esc(s.athlete_club||'—') + '</td>' +
+            '<td style="color:var(--muted);font-size:.9rem">' + esc(s.personal_best||'—') + '</td>' +
             '</tr>';
         }
       }).join('');
     });
 
     const status = ev.has_results ? '✅' : '⏳';
-    return '<div class="event-full-section" id="eseed-' + idx + '" data-evname="' + ev.name + '" data-sport="' + (ev.sport || 'Atletismo') + '">' +
+    return '<div class="event-full-section" id="eseed-' + idx + '" data-evname="' + esc(ev.name) + '">' +
       '<div class="event-full-header" onclick="toggleSeed(' + idx + ')">' +
-        '<div><div class="event-full-title">' + status + ' ' + ev.name + ' — ' + ev.category + ' (' + (ev.gender?ev.gender[0]:'') + ')</div>' +
-        '<div class="event-full-sub">' + ev.type + ' · ' + ev.round + '</div></div>' +
+        '<div><div class="event-full-title">' + status + ' ' + esc(ev.name) + ' — ' + esc(ev.category) + ' (' + esc(ev.gender?ev.gender[0]:'') + ')</div>' +
+        '<div class="event-full-sub">' + esc(ev.type) + ' · ' + esc(ev.round) + '</div></div>' +
         '<span class="toggle-icon">▾</span>' +
       '</div>' +
       '<div class="event-table-wrap"><div class="table-scroll">' +
@@ -975,7 +993,7 @@ function filterSiembras() {
   const q = document.getElementById('search-siembras').value.toLowerCase();
   const ev = document.getElementById('filter-event-sembr').value;
   document.querySelectorAll('#siembras-wrap .event-full-section').forEach(sec => {
-    sec.style.display = sec.textContent.toLowerCase().includes(q) && (currentSport === '' || sec.dataset.sport === currentSport) && (ev === '' || sec.dataset.evname === ev) ? '' : 'none';
+    sec.style.display = sec.textContent.toLowerCase().includes(q) && (ev === '' || sec.dataset.evname === ev) ? '' : 'none';
   });
 }
 
@@ -989,16 +1007,16 @@ function renderSchedule() {
   }
   wrap.innerHTML = jornadas.map(j =>
     '<div class="schedule-section">' +
-    '<div class="jornada-header">📅 ' + j.name + '</div>' +
+    '<div class="jornada-header">📅 ' + esc(j.name) + '</div>' +
     '<div class="table-scroll"><table class="schedule-table">' +
     '<thead><tr><th>Hora</th><th>Prueba</th><th>Categoría</th><th>Ronda</th><th>Tipo</th></tr></thead><tbody>' +
     (j.events || []).map(ev =>
       '<tr>' +
-      '<td class="time-cell">' + (ev.time || '—') + '</td>' +
-      '<td style="font-weight:700;color:var(--text)">' + ev.name + '</td>' +
-      '<td>' + ev.category + ' (' + (ev.gender ? ev.gender[0] : '') + ')</td>' +
-      '<td style="color:var(--muted);font-weight:600">' + (ev.round || 'Final') + '</td>' +
-      '<td><span class="event-badge ' + (ev.type === 'Campo' ? 'badge-campo' : 'badge-pista') + '">' + ev.type + '</span></td>' +
+      '<td class="time-cell">' + esc(ev.time || '—') + '</td>' +
+      '<td style="font-weight:700;color:var(--text)">' + esc(ev.name) + '</td>' +
+      '<td>' + esc(ev.category) + ' (' + esc(ev.gender ? ev.gender[0] : '') + ')</td>' +
+      '<td style="color:var(--muted);font-weight:600">' + esc(ev.round || 'Final') + '</td>' +
+      '<td><span class="event-badge ' + (ev.type === 'Campo' ? 'badge-campo' : 'badge-pista') + '">' + esc(ev.type) + '</span></td>' +
       '</tr>'
     ).join('') +
     '</tbody></table></div></div>'
